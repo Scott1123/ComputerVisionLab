@@ -1,5 +1,5 @@
 import numpy as np
-
+from datetime import datetime as dt
 
 class EquationsSolver(object):
     """
@@ -55,6 +55,7 @@ class EquationsSolver(object):
         :return: the solution x or error information
         """
         # self.show_equations(A, b)  # only when dim <= 10
+        start = dt.now()
         cls.max_itration_times = max_itration_times
         func = {
             'gauss': cls._solve_gauss,
@@ -68,7 +69,7 @@ class EquationsSolver(object):
         if flag == -1:
             print('This method is not supported!\n'
                   'Please choose one from these:\n'
-                  '(Gauss, LU, chase, square_root).')
+                  '(gauss, lu, chase, square_root, jacobi, gauss_seidel).')
         elif flag == 0:
             print('No Answer! det(A) = 0.')
         elif flag == 1:
@@ -83,7 +84,7 @@ class EquationsSolver(object):
             print('No Answer! Matrix A is not a positive definite matrix.')
         elif flag == 6:
             print('No Answer! A[i, i] == 0 for some i.')
-
+        print('[%s] time cost: %.4f s.' % (method, (dt.now() - start).total_seconds()))
         return answer
 
     @classmethod
@@ -267,6 +268,7 @@ class EquationsSolver(object):
     @classmethod
     def _solve_jacobi(cls, A, b):
         n = len(A)
+
         # 1. get Dc, L+U, Bj, fj
         D_inv = np.zeros((n, n))
         LplusU = -A[:, :]
@@ -286,12 +288,13 @@ class EquationsSolver(object):
             x = Bj.dot(x) + fj
             b2 = A.dot(x)
             times += 1
-        print('[Jacobi] itration times:', times)
+        print('[jacobi] itration times:', times)
         return 1, x
 
     @classmethod
     def _solve_gauss_seidel(cls, A, b):
         n = len(A)
+
         # 1. get D, L, U, Bg, fg
         DminusL = np.zeros((n, n))
         U = np.zeros((n, n))
@@ -310,7 +313,7 @@ class EquationsSolver(object):
             x = Bg.dot(x) + fg
             b2 = A.dot(x)
             times += 1
-        print('[Gauss_Seidel] itration times:', times)
+        print('[gauss_seidel] itration times:', times)
         return 1, x
 
     @classmethod
