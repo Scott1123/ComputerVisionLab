@@ -6,12 +6,11 @@ class EquationsSolver(object):
     This class is for solving equations in some methods, including Gauss, LU decompose, chase, square root.
 
     """
-    __slots__ = ['n', 'eps']
-    def __init__(self, eps=1e-5):
-        np.random.seed(0)
-        self.eps = eps
+    eps = 1e-6
+    max_itration_times = 0
 
-    def generate_data(self, n=10):
+    @classmethod
+    def generate_data(cls, n=10):
         """
         Generate Unrestricted Matrix A, and vector x and b.
         :param n: the scale of matrix
@@ -23,7 +22,8 @@ class EquationsSolver(object):
         b = A.dot(x)
         return A, x, b
 
-    def generate_tridiagonal_matrix(self, n=10):
+    @classmethod
+    def generate_tridiagonal_matrix(cls, n=10):
         """
         Generate Tridiagonal Matrix A, and vector x and b.
         :param n: the scale of matrix
@@ -43,23 +43,27 @@ class EquationsSolver(object):
         b = A.dot(x)
         return A, x, b
 
-    def solve(self, A, b, method='Gauss'):
+    @classmethod
+    def solve(cls, A, b, method='gauss', max_itration_times=100000):
         """
         Solve equations in specified method.
 
         :param A: coefficient matrix of the equations
         :param b: vector
         :param method: the way to solve equations
-        :return: the solution x or error infomation
+        :param max_itration_times: the maximum rounds of iteration
+        :return: the solution x or error information
         """
-        # self._show_equations(A, b)  # only when dim <= 10
-
+        # self.show_equations(A, b)  # only when dim <= 10
+        cls.max_itration_times = max_itration_times
         func = {
-            'Gauss': self._solve_Gauss,
-            'LU': self._solve_LU,
-            'chase': self._solve_chase,
-            'square_root': self._solve_square_root
-        }.get(method, self._other_method)
+            'gauss': cls._solve_gauss,
+            'lu': cls._solve_lu,
+            'chase': cls._solve_chase,
+            'square_root': cls._solve_square_root,
+            'jacobi': cls._solve_jacobi,
+            'gauss_seidel': cls._solve_gauss_seidel
+        }.get(method, cls._other_method)
         flag, answer = func(A, b)
         if flag == -1:
             print('This method is not supported!\n'
@@ -68,8 +72,7 @@ class EquationsSolver(object):
         elif flag == 0:
             print('No Answer! det(A) = 0.')
         elif flag == 1:
-            print('Here is the solution x:')
-            print(answer)
+            print('[%s] Success!' % method)
         elif flag == 2:
             print('No Answer! Matrix A is not a tridiagonal matrix.')
         elif flag == 3:
@@ -78,10 +81,13 @@ class EquationsSolver(object):
             print('No Answer! Matrix A is not a symmetric matrix.')
         elif flag == 5:
             print('No Answer! Matrix A is not a positive definite matrix.')
+        elif flag == 6:
+            print('No Answer! A[i, i] == 0 for some i.')
 
         return answer
 
-    def _show_equations(self, A, b):
+    @classmethod
+    def show_equations(cls, A, b):
         n = len(A)
         if n <= 10:
             print('Here is the equations:')
@@ -91,7 +97,8 @@ class EquationsSolver(object):
                 print('[{}] [x{}] = [{}]'.format(' '.join(lst), i, bi))
             print('===========================================')
 
-    def _solve_Gauss(self, A, b):
+    @classmethod
+    def _solve_gauss(cls, A, b):
         # 1. update coefficient
         n = len(b)
         for k in range(n - 1):
@@ -100,7 +107,7 @@ class EquationsSolver(object):
             for i in range(k + 1, n):
                 if A[i, k] > A[line, k]:
                     line = i
-            if np.abs(A[line, k]) < self.eps:
+            if np.abs(A[line, k]) < cls.eps:
                 return 0, None
             if line != k:
                 for j in range(n):
@@ -114,7 +121,7 @@ class EquationsSolver(object):
                     A[i, j] -= (A[i, k] * A[k, j])
                 b[i, 0] -= (A[i, k] * b[k, 0])
 
-        if np.abs(A[n - 1, n - 1]) < self.eps:
+        if np.abs(A[n - 1, n - 1]) < cls.eps:
             return 0, None
 
         # 2. solve Ax = b
@@ -127,10 +134,11 @@ class EquationsSolver(object):
 
         return 1, b
 
-    def _solve_LU(self, A, b):
+    @classmethod
+    def _solve_lu(cls, A, b):
         # Doolittle method
         # 0. judge whether A can be decomposed into L and U.
-        if not self._judge_n_det(A):
+        if not cls._judge_n_det(A):
             return 0, None
 
         n = len(b)
@@ -168,9 +176,10 @@ class EquationsSolver(object):
 
         return 1, b
 
-    def _solve_chase(self, A, f):
+    @classmethod
+    def _solve_chase(cls, A, f):
         # 0. judge whether A is a tridiagonal matrix
-        if not self._judge_tridiagonal_matrix(A):
+        if not cls._judge_tridiagonal_matrix(A):
             return 2, None
 
         # 1. get diags and check main diagonal
@@ -183,7 +192,7 @@ class EquationsSolver(object):
             c[i-1] = A[i - 1, i]
         c[n-1] = 0
 
-        if not self._judge_main_diag(a, b, c, n):
+        if not cls._judge_main_diag(a, b, c, n):
             return 3, None
 
         # 2. get alpha/beta/gamma
@@ -210,11 +219,12 @@ class EquationsSolver(object):
 
         return 1, f
 
-    def _solve_square_root(self, A, b):
+    @classmethod
+    def _solve_square_root(cls, A, b):
         # 0. judge whether A is a symmetric and positive definite matrix
-        if not self._judge_symmetric_matrix(A):
+        if not cls._judge_symmetric_matrix(A):
             return 4, None
-        if not self._judge_positive_definite_matrix(A):
+        if not cls._judge_positive_definite_matrix(A):
             return 5, None
 
         # 1. get L (stored in A)
@@ -254,11 +264,62 @@ class EquationsSolver(object):
 
         return 1, b
 
-    def _other_method(self, A, b):
+    @classmethod
+    def _solve_jacobi(cls, A, b):
+        n = len(A)
+        # 1. get Dc, L+U, Bj, fj
+        D_inv = np.zeros((n, n))
+        LplusU = -A[:, :]
+        for i in range(n):
+            if A[i, i] == 0:
+                return 6, None
+            D_inv[i, i] = 1 / A[i, i]
+            LplusU[i, i] = 0
+        Bj = D_inv.dot(LplusU)
+        fj = D_inv.dot(b)
+
+        # 2. x[k+1] = Bj(x[k]) + fj
+        times = 0
+        x = np.zeros((n, 1))
+        b2 = A.dot(x)
+        while times < cls.max_itration_times and not cls._judge_convergence(b2, b):
+            x = Bj.dot(x) + fj
+            b2 = A.dot(x)
+            times += 1
+        print('[Jacobi] itration times:', times)
+        return 1, x
+
+    @classmethod
+    def _solve_gauss_seidel(cls, A, b):
+        n = len(A)
+        # 1. get D, L, U, Bg, fg
+        DminusL = np.zeros((n, n))
+        U = np.zeros((n, n))
+        for i in range(n):
+            DminusL[i, :(i+1)] = A[i, :(i+1)]
+            U[i, (i+1):] = A[i, (i+1):]
+        DminusL_inv = np.linalg.inv(DminusL)
+        Bg = DminusL_inv.dot(U)
+        fg = DminusL_inv.dot(b)
+
+        # 2. x[k+1] = Bg(x[k]) + fg
+        times = 0
+        x = np.zeros((n, 1))
+        b2 = A.dot(x)
+        while times < cls.max_itration_times and not cls._judge_convergence(b2, b):
+            x = Bg.dot(x) + fg
+            b2 = A.dot(x)
+            times += 1
+        print('[Gauss_Seidel] itration times:', times)
+        return 1, x
+
+    @classmethod
+    def _other_method(cls, A, b):
         return -1, None
 
     # made for LU
-    def _judge_n_det(self, A):
+    @classmethod
+    def _judge_n_det(cls, A):
         n = len(A)
         for i in range(1, n+1):
             mat = A[:i, :i]
@@ -267,7 +328,8 @@ class EquationsSolver(object):
         return True
 
     # made for chase 1
-    def _judge_tridiagonal_matrix(self, A):
+    @classmethod
+    def _judge_tridiagonal_matrix(cls, A):
         n = len(A)
         for i in range(n):
             for j in range(n):
@@ -278,7 +340,8 @@ class EquationsSolver(object):
         return True
 
     # made for chase 2
-    def _judge_main_diag(self, a, b, c, n):
+    @classmethod
+    def _judge_main_diag(cls, a, b, c, n):
         if not np.abs(b[0]) > np.abs(c[0]) > 0:
             return False
         for i in range(1, n-1):
@@ -291,7 +354,8 @@ class EquationsSolver(object):
         return True
 
     # made for square_root 1
-    def _judge_symmetric_matrix(self, A):
+    @classmethod
+    def _judge_symmetric_matrix(cls, A):
         n = len(A)
         for i in range(n):
             for j in range(i):
@@ -300,6 +364,17 @@ class EquationsSolver(object):
         return True
 
     # made for square_root 2
-    def _judge_positive_definite_matrix(self, A):
+    @classmethod
+    def _judge_positive_definite_matrix(cls, A):
         eigvals = np.linalg.eigvals(A)
         return np.all(eigvals > 0)
+
+    @classmethod
+    def _judge_convergence(cls, b2, b):
+        n = len(b)
+        vis = [np.abs(b2[i, 0] - b[i, 0]) < cls.eps for i in range(n)]
+        if all(vis):
+            return True
+        else:
+            return False
+

@@ -1,18 +1,36 @@
 #!/usr/bin/python3
-from solve_equations import EquationsSolver
+from homework_2.solve_equations import EquationsSolver
 import numpy as np
 
 
 def main():
-    model = EquationsSolver()
-    dim = 10
-    A = np.random.randint(0, 10, (dim, dim)) + np.eye(dim)
-    x = np.arange(1, dim + 1).reshape((dim, 1))
-    b = A.dot(x)
-    model.solve(A, b, method='Gauss')
-    # model.solve(A, b, method='LU')
+    dim = 5
+    A = np.zeros((dim, dim))
+    for i in range(dim):
+        for j in range(dim):
+            if i == j:
+                A[i, j] = 2
+            elif np.abs(i - j) == 1:
+                A[i, j] = -1
+    b = np.ones((dim, 1))
 
-    # Here is other data to test four methods
+    # compare the two answers (Jacobi, Gauss_Seidel and chase method)
+
+    xj = EquationsSolver.solve(A, b, method='jacobi')
+    xg = EquationsSolver.solve(A, b, method='gauss_seidel')
+    xc = EquationsSolver.solve(A, b, method='chase')
+    for i in range(dim):
+        print('xc: %.2f\t\t[xj: %.2f\t\t%.2f]\t\t[xg: %.2f\t\t%.2f]' % (xc[i, 0],
+                                                                        xj[i, 0], np.abs(xj[i, 0] - xc[i, 0]),
+                                                                        xg[i, 0], np.abs(xg[i, 0] - xc[i, 0])))
+
+    # Here is other data to test the top four methods
+
+    # A = np.random.randint(0, 10, (dim, dim)) + np.eye(dim)
+    # x = np.arange(1, dim + 1).reshape((dim, 1))
+    # b = A.dot(x)
+    # x = EquationsSolver.solve(A, b, method='Gauss')
+    # x = EquationsSolver.solve(A, b, method='LU')
 
     # A, x, b = model.generate_data()
 
