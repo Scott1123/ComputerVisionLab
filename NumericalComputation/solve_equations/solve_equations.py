@@ -301,6 +301,7 @@ class EquationsSolver(object):
 
     @classmethod
     def _solve_gauss_seidel(cls, A, b):
+        # TODO: judge whether x doesn't change to determine when to stop.
         n = len(A)
 
         # 1. get D, L, U, Bg, fg
@@ -380,6 +381,7 @@ class EquationsSolver(object):
         eigvals = np.linalg.eigvals(A)
         return np.all(eigvals > 0)
 
+    # made for jacobi and gauss_seidel
     @classmethod
     def _judge_convergence(cls, b2, b):
         n = len(b)
