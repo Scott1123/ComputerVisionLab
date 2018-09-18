@@ -100,8 +100,10 @@ class EquationsSolver(object):
 
     @classmethod
     def _solve_gauss(cls, A, b):
+        # TODO: ERROR!!!
+        n = len(A)
         # 1. update coefficient
-        n = len(b)
+        x = b[:]
         for k in range(n - 1):
             # find the max coefficient
             line = k
@@ -113,36 +115,37 @@ class EquationsSolver(object):
             if line != k:
                 for j in range(n):
                     A[line, j], A[k, j] = A[k, j], A[line, j]
-                b[line, 0], b[k, 0] = b[k, 0], b[line, 0]
+                x[line, 0], x[k, 0] = x[k, 0], x[line, 0]
 
             # update(k)
             for i in range(k + 1, n):
                 A[i, k] /= A[k, k]
                 for j in range(k + 1, n):
                     A[i, j] -= (A[i, k] * A[k, j])
-                b[i, 0] -= (A[i, k] * b[k, 0])
+                x[i, 0] -= (A[i, k] * x[k, 0])
 
         if np.abs(A[n - 1, n - 1]) < cls.eps:
             return 0, None
 
         # 2. solve Ax = b
-        b[n - 1, 0] /= A[n - 1, n - 1]
+        x[n - 1, 0] /= A[n - 1, n - 1]
         for i in range(n - 2, -1, -1):
             sum = 0
             for j in range(i + 1, n):
-                sum += A[i, j] * b[j, 0]
-            b[i, 0] = (b[i, 0] - sum) / A[i, i]
+                sum += A[i, j] * x[j, 0]
+            x[i, 0] = (x[i, 0] - sum) / A[i, i]
 
-        return 1, b
+        return 1, x
 
     @classmethod
     def _solve_lu(cls, A, b):
         # Doolittle method
+        n = len(A)
+
         # 0. judge whether A can be decomposed into L and U.
         if not cls._judge_n_det(A):
             return 0, None
 
-        n = len(b)
         # 1. get L & U (L & U are stored in matrix A)
         for i in range(1, n):
             A[i, 0] /= A[0, 0]
@@ -167,15 +170,16 @@ class EquationsSolver(object):
                 sum += (A[k, j] * y[j, 0])
             y[k, 0] = b[k, 0] - sum
 
-        # 3. solve Ux = y (x is stored in b)
-        b[n-1, 0] = y[n-1, 0] / A[n-1, n-1]
+        # 3. solve Ux = y
+        x = np.zeros((n, 1))
+        x[n-1, 0] = y[n-1, 0] / A[n-1, n-1]
         for k in range(n-2, -1, -1):
             sum = 0
             for j in range(k+1, n):
-                sum += (A[k, j] * b[j, 0])
-            b[k, 0] = (y[k, 0] - sum) / A[k, k]
+                sum += (A[k, j] * x[j, 0])
+            x[k, 0] = (y[k, 0] - sum) / A[k, k]
 
-        return 1, b
+        return 1, x
 
     @classmethod
     def _solve_chase(cls, A, f):
@@ -213,57 +217,61 @@ class EquationsSolver(object):
         for i in range(1, n):
             y[i, 0] = (f[i, 0] - a[i] * y[i - 1, 0]) / (b[i] - a[i] * beta[i - 1])
 
-        # 4. solve Ux = y (x is also stored in f)
-        f[n-1, 0] = y[n-1, 0]
+        # 4. solve Ux = y
+        x = np.zeros((n, 1))
+        x[n-1, 0] = y[n-1, 0]
         for i in range(n-2, -1, -1):
-            f[i, 0] = y[i] - (beta[i] * f[i + 1, 0])
+            x[i, 0] = y[i] - (beta[i] * x[i + 1, 0])
 
-        return 1, f
+        return 1, x
 
     @classmethod
     def _solve_square_root(cls, A, b):
+        n = len(A)
+
         # 0. judge whether A is a symmetric and positive definite matrix
         if not cls._judge_symmetric_matrix(A):
             return 4, None
         if not cls._judge_positive_definite_matrix(A):
             return 5, None
 
-        # 1. get L (stored in A)
-        n = len(A)
-        A[0, 0] = np.sqrt(A[0, 0])
+        # 1. get L
+        L = np.zeros((n, n))
+        L[0, 0] = np.sqrt(A[0, 0])
         for i in range(1, n):
-            A[i, 0] /= A[0, 0]
+            L[i, 0] = A[i, 0] / L[0, 0]
         for j in range(1, n):
             # calculate L[j, j] first
             sum = 0
             for k in range(0, j):
-                sum += (A[j, k] * A[j, k])
-            A[j, j] = np.sqrt(A[j, j] - sum)
+                sum += (L[j, k] * L[j, k])
+            L[j, j] = np.sqrt(A[j, j] - sum)
             # calculate coefficients under L[j, j]
             for i in range(j+1, n):
                 sum = 0
                 for k in range(0, j):
-                    sum += (A[i, k] * A[j, k])
-                A[i, j] = (A[i, j] - sum) / A[j, j]
+                    sum += (L[i, k] * L[j, k])
+                L[i, j] = (A[i, j] - sum) / L[j, j]
 
         # 2. solve Ly = b
-        y = np.zeros(n).reshape((n, 1))
-        y[0, 0] = b[0, 0] / A[0, 0]
+        y = np.zeros((n, 1))
+        y[0, 0] = b[0, 0] / L[0, 0]
         for i in range(1, n):
             sum = 0
             for k in range(0, i):
-                sum += (A[i, k] * y[k, 0])
-            y[i, 0] = (b[i, 0] - sum) / A[i, i]
+                sum += (L[i, k] * y[k, 0])
+            y[i, 0] = (b[i, 0] - sum) / L[i, i]
 
-        # 3. solve L(T)x = y (x is stored in b)
-        b[n-1, 0] = y[n-1] / A[n-1, n-1]
+        # 3. solve L(T)x = y
+        x = np.zeros((n, 1))
+        x[n-1, 0] = y[n-1] / L[n-1, n-1]
         for i in range(n-2, -1, -1):
             sum = 0
             for k in range(i+1, n):
-                sum += (A[k, i] * b[k, 0])
-            b[i] = (y[i, 0] - sum) / A[i, i]
+                sum += (L[k, i] * x[k, 0])
+            x[i] = (y[i, 0] - sum) / L[i, i]
 
-        return 1, b
+        return 1, x
 
     @classmethod
     def _solve_jacobi(cls, A, b):

@@ -46,6 +46,7 @@ def main():
     # A = np.array([[2, 1, 0, 0], [1/2, 2, 1/2, 0], [0, 1/2, 2, 1/2], [0, 0, 1, 2]])
     # x = np.array([[-13/45], [7/90], [-1/45], [1/90]])
     # b = np.array([[-1/2], [0], [0], [0]])
+
     # chase data 2
     # A = np.array([[3, 1, 0, 0], [1, 4, 1, 0], [0, 2, 5, 2], [0, 0, 2, 6]])
     # x = np.array([[1], [3], [-2], [1]])
@@ -55,6 +56,10 @@ def main():
     # A = np.array([[4, 2, -2], [2, 2, -3], [-2, -3, 14]])
     # x = np.array([[2], [2], [1]])
     # b = np.array([[10], [5], [4]])
+
+    # x2 = EquationsSolver.solve(A, b, method='square_root')
+    # print(x2)
+    # print(x)
 
 
 if __name__ == '__main__':
