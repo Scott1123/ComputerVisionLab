@@ -1,6 +1,7 @@
 
-This file implements four methods for solving equations,
+This file implements some methods for solving equations,
 including Gauss, LU decompose, chase, square root.
+(add two itration methods: Jacobi, Gauss-Seidel)
 
 
 Files:
