@@ -5,27 +5,30 @@ import numpy as np
 
 def main():
     dim = 100
-    A = np.zeros((dim, dim))
+    A = np.zeros((dim, dim), dtype='f8')
     for i in range(dim):
         for j in range(dim):
             if i == j:
                 A[i, j] = 2
             elif np.abs(i - j) == 1:
                 A[i, j] = -1
-    b = np.ones((dim, 1))
+    b = np.ones((dim, 1), dtype='f8')
 
     # compare the two answers (Jacobi, Gauss_Seidel and chase method)
 
     xj = EquationsSolver.solve(A, b, method='jacobi')
     xg = EquationsSolver.solve(A, b, method='gauss_seidel')
     xc = EquationsSolver.solve(A, b, method='chase')
+    xt = EquationsSolver.solve(A, b, method='gauss')
     for i in range(dim):
-        print('%4d: xc: %8.2f\t\t'
-              '[xj: %8.2f\t loss: %8.2f]\t\t'
-              '[xg: %8.2f\t loss: %8.2f]'
+        print('%4d: xc: %8.2f\t'
+              '[xj: %8.2f\t loss: %8.2f]\t'
+              '[xg: %8.2f\t loss: %8.2f]\t'
+              '[xt: %8.2f\t loss: %8.2f]\t'
               % (i+1, xc[i, 0],
                  xj[i, 0], np.abs(xj[i, 0] - xc[i, 0]),
-                 xg[i, 0], np.abs(xg[i, 0] - xc[i, 0])))
+                 xg[i, 0], np.abs(xg[i, 0] - xc[i, 0]),
+                 xt[i, 0], np.abs(xt[i, 0] - xc[i, 0])))
 
     # Here is other data to test the top four methods
 
@@ -38,9 +41,9 @@ def main():
     # A, x, b = model.generate_data()
 
     # LU data 1
-    # A = np.array([[2, 1, 5], [4, 1, 12], [-2, -4, 5]])
-    # x = np.array([[1], [-1], [2]])
-    # b = np.array([[11], [27], [12]])
+    # A = np.array([[2, 1, 5], [4, 1, 12], [-2, -4, 5]], dtype='f8')
+    # x = np.array([[1], [-1], [2]], dtype='f8')
+    # b = np.array([[11], [27], [12]], dtype='f8')
 
     # chase data 1
     # A = np.array([[2, 1, 0, 0], [1/2, 2, 1/2, 0], [0, 1/2, 2, 1/2], [0, 0, 1, 2]])
@@ -57,7 +60,7 @@ def main():
     # x = np.array([[2], [2], [1]])
     # b = np.array([[10], [5], [4]])
 
-    # x2 = EquationsSolver.solve(A, b, method='square_root')
+    # x2 = EquationsSolver.solve(A, b)
     # print(x2)
     # print(x)
 

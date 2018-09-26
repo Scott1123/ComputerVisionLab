@@ -56,7 +56,7 @@ class EquationsSolver(object):
         :param max_itration_times: the maximum rounds of iteration
         :return: the solution x or error information
         """
-        # self.show_equations(A, b)  # only when dim <= 10
+        cls.show_equations(A, b)  # only when dim <= 10
         start = dt.now()
         cls.max_itration_times = max_itration_times
         func = {
@@ -67,7 +67,10 @@ class EquationsSolver(object):
             'jacobi': cls._solve_jacobi,
             'gauss_seidel': cls._solve_gauss_seidel
         }.get(method, cls._other_method)
-        flag, answer = func(A, b)
+        # make a copy of A and b to make sure they will not be changed.
+        A0 = np.copy(A)
+        b0 = np.copy(b)
+        flag, answer = func(A0, b0)
         if flag == -1:
             print('This method is not supported!\n'
                   'Please choose one from these:\n'
@@ -95,17 +98,15 @@ class EquationsSolver(object):
         if n <= 10:
             print('Here is the equations:')
             for i in range(n):
-                lst = ['{:4.0f}'.format(i) for i in A[i, :]]
-                bi = '{:6.0f}'.format(b[i, 0])
-                print('[{}] [x{}] = [{}]'.format(' '.join(lst), i, bi))
+                Ax_i = ['{:4.0f}'.format(i) for i in A[i, :]]
+                b_i = '{:6.0f}'.format(b[i, 0])
+                print('[{}] [x{}] = [{}]'.format(' '.join(Ax_i), i, b_i))
             print('===========================================')
 
     @classmethod
     def _solve_gauss(cls, A, b):
-        # TODO: ERROR!!!
         n = len(A)
         # 1. update coefficient
-        x = b[:]
         for k in range(n - 1):
             # find the max coefficient
             line = k
@@ -117,27 +118,28 @@ class EquationsSolver(object):
             if line != k:
                 for j in range(n):
                     A[line, j], A[k, j] = A[k, j], A[line, j]
-                x[line, 0], x[k, 0] = x[k, 0], x[line, 0]
+                b[line, 0], b[k, 0] = b[k, 0], b[line, 0]
 
             # update(k)
             for i in range(k + 1, n):
-                A[i, k] /= A[k, k]
+                A[i, k] = A[i, k] / A[k, k]
+                # print('---- ', A[i, k])
                 for j in range(k + 1, n):
-                    A[i, j] -= (A[i, k] * A[k, j])
-                x[i, 0] -= (A[i, k] * x[k, 0])
+                    A[i, j] = A[i, j] - (A[i, k] * A[k, j])
+                b[i, 0] = b[i, 0] - (A[i, k] * b[k, 0])
 
         if np.abs(A[n - 1, n - 1]) < cls.eps:
             return 0, None
 
         # 2. solve Ax = b
-        x[n - 1, 0] /= A[n - 1, n - 1]
+        b[n - 1, 0] /= A[n - 1, n - 1]
         for i in range(n - 2, -1, -1):
             tmp_sum = 0
             for j in range(i + 1, n):
-                tmp_sum += A[i, j] * x[j, 0]
-            x[i, 0] = (x[i, 0] - tmp_sum) / A[i, i]
+                tmp_sum += A[i, j] * b[j, 0]
+            b[i, 0] = (b[i, 0] - tmp_sum) / A[i, i]
 
-        return 1, x
+        return 1, b
 
     @classmethod
     def _solve_lu(cls, A, b):
