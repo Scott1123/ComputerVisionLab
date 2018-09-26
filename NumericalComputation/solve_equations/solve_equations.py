@@ -1,9 +1,11 @@
 import numpy as np
 from datetime import datetime as dt
 
+
 class EquationsSolver(object):
     """
     This class is for solving equations in some methods, including Gauss, LU decompose, chase, square root.
+    add Jacobi itration method, Gauss_Seidel itration mathod.
 
     """
     eps = 1e-6
@@ -77,7 +79,7 @@ class EquationsSolver(object):
         elif flag == 2:
             print('No Answer! Matrix A is not a tridiagonal matrix.')
         elif flag == 3:
-            print('No Answer! The main doagonal of Matrix A is not big enough.')
+            print('No Answer! The main diagonal of Matrix A is not big enough.')
         elif flag == 4:
             print('No Answer! Matrix A is not a symmetric matrix.')
         elif flag == 5:
@@ -130,10 +132,10 @@ class EquationsSolver(object):
         # 2. solve Ax = b
         x[n - 1, 0] /= A[n - 1, n - 1]
         for i in range(n - 2, -1, -1):
-            sum = 0
+            tmp_sum = 0
             for j in range(i + 1, n):
-                sum += A[i, j] * x[j, 0]
-            x[i, 0] = (x[i, 0] - sum) / A[i, i]
+                tmp_sum += A[i, j] * x[j, 0]
+            x[i, 0] = (x[i, 0] - tmp_sum) / A[i, i]
 
         return 1, x
 
@@ -151,33 +153,33 @@ class EquationsSolver(object):
             A[i, 0] /= A[0, 0]
         for k in range(1, n):
             for i in range(k, n):
-                sum = 0
+                tmp_sum = 0
                 for j in range(k):
-                    sum += (A[k, j] * A[j, i])
-                A[k, i] -= sum
+                    tmp_sum += (A[k, j] * A[j, i])
+                A[k, i] -= tmp_sum
             for i in range(k+1, n):
-                sum = 0
+                tmp_sum = 0
                 for j in range(k):
-                    sum += (A[i, j] * A[j, k])
-                A[i, k] = (A[i, k] - sum) / A[k, k]
+                    tmp_sum += (A[i, j] * A[j, k])
+                A[i, k] = (A[i, k] - tmp_sum) / A[k, k]
 
         # 2. solve Ly = b
         y = np.zeros((n, 1))
         y[0, 0] = b[0, 0]
         for k in range(1, n):
-            sum = 0
+            tmp_sum = 0
             for j in range(k):
-                sum += (A[k, j] * y[j, 0])
-            y[k, 0] = b[k, 0] - sum
+                tmp_sum += (A[k, j] * y[j, 0])
+            y[k, 0] = b[k, 0] - tmp_sum
 
         # 3. solve Ux = y
         x = np.zeros((n, 1))
         x[n-1, 0] = y[n-1, 0] / A[n-1, n-1]
         for k in range(n-2, -1, -1):
-            sum = 0
+            tmp_sum = 0
             for j in range(k+1, n):
-                sum += (A[k, j] * x[j, 0])
-            x[k, 0] = (y[k, 0] - sum) / A[k, k]
+                tmp_sum += (A[k, j] * x[j, 0])
+            x[k, 0] = (y[k, 0] - tmp_sum) / A[k, k]
 
         return 1, x
 
@@ -189,7 +191,7 @@ class EquationsSolver(object):
 
         # 1. get diags and check main diagonal
         n = len(A)
-        a, b, c = np.zeros(n), np.zeros(n), np.zeros(n) # b is the main diag
+        a, b, c = np.zeros(n), np.zeros(n), np.zeros(n)  # b is the main diag
         b[0] = A[0, 0]
         for i in range(1, n):
             a[i] = A[i, i - 1]
@@ -242,34 +244,34 @@ class EquationsSolver(object):
             L[i, 0] = A[i, 0] / L[0, 0]
         for j in range(1, n):
             # calculate L[j, j] first
-            sum = 0
+            tmp_sum = 0
             for k in range(0, j):
-                sum += (L[j, k] * L[j, k])
-            L[j, j] = np.sqrt(A[j, j] - sum)
+                tmp_sum += (L[j, k] * L[j, k])
+            L[j, j] = np.sqrt(A[j, j] - tmp_sum)
             # calculate coefficients under L[j, j]
             for i in range(j+1, n):
-                sum = 0
+                tmp_sum = 0
                 for k in range(0, j):
-                    sum += (L[i, k] * L[j, k])
-                L[i, j] = (A[i, j] - sum) / L[j, j]
+                    tmp_sum += (L[i, k] * L[j, k])
+                L[i, j] = (A[i, j] - tmp_sum) / L[j, j]
 
         # 2. solve Ly = b
         y = np.zeros((n, 1))
         y[0, 0] = b[0, 0] / L[0, 0]
         for i in range(1, n):
-            sum = 0
+            tmp_sum = 0
             for k in range(0, i):
-                sum += (L[i, k] * y[k, 0])
-            y[i, 0] = (b[i, 0] - sum) / L[i, i]
+                tmp_sum += (L[i, k] * y[k, 0])
+            y[i, 0] = (b[i, 0] - tmp_sum) / L[i, i]
 
         # 3. solve L(T)x = y
         x = np.zeros((n, 1))
         x[n-1, 0] = y[n-1] / L[n-1, n-1]
         for i in range(n-2, -1, -1):
-            sum = 0
+            tmp_sum = 0
             for k in range(i+1, n):
-                sum += (L[k, i] * x[k, 0])
-            x[i] = (y[i, 0] - sum) / L[i, i]
+                tmp_sum += (L[k, i] * x[k, 0])
+            x[i] = (y[i, 0] - tmp_sum) / L[i, i]
 
         return 1, x
 
@@ -309,7 +311,7 @@ class EquationsSolver(object):
         U = np.zeros((n, n))
         for i in range(n):
             DminusL[i, :(i+1)] = A[i, :(i+1)]
-            U[i, (i+1):] = A[i, (i+1):]
+            U[i, (i+1):] = -A[i, (i+1):]
         DminusL_inv = np.linalg.inv(DminusL)
         Bg = DminusL_inv.dot(U)
         fg = DminusL_inv.dot(b)
@@ -324,6 +326,10 @@ class EquationsSolver(object):
             times += 1
         print('[gauss_seidel] itration times:', times)
         return 1, x
+
+    @classmethod
+    def _solve_sor(cls, A, b):
+        pass
 
     @classmethod
     def _other_method(cls, A, b):
@@ -354,40 +360,20 @@ class EquationsSolver(object):
     # made for chase 2
     @classmethod
     def _judge_main_diag(cls, a, b, c, n):
-        if not np.abs(b[0]) > np.abs(c[0]) > 0:
-            return False
-        for i in range(1, n-1):
-            if np.abs(b[i]) >= np.abs(a[i]) + np.abs(c[i]) and a[i] * c[i] != 0:
-                continue
-            else:
-                return False
-        if not np.abs(b[n-1]) > np.abs(a[n-1]) > 0:
-            return False
-        return True
+        return np.all((np.abs(b) - np.abs(a) - np.abs(c)) >= 0)
 
     # made for square_root 1
     @classmethod
     def _judge_symmetric_matrix(cls, A):
-        n = len(A)
-        for i in range(n):
-            for j in range(i):
-                if A[i, j] != A[j, i]:
-                    return False
-        return True
+        return np.all(A == A.T)
 
     # made for square_root 2
     @classmethod
     def _judge_positive_definite_matrix(cls, A):
-        eigvals = np.linalg.eigvals(A)
-        return np.all(eigvals > 0)
+        eig_vals = np.linalg.eigvals(A)
+        return np.all(eig_vals > 0)
 
     # made for jacobi and gauss_seidel
     @classmethod
     def _judge_convergence(cls, b2, b):
-        n = len(b)
-        vis = [np.abs(b2[i, 0] - b[i, 0]) < cls.eps for i in range(n)]
-        if all(vis):
-            return True
-        else:
-            return False
-
+        return np.all(np.abs(b2 - b) < cls.eps)

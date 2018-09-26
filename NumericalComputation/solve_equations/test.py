@@ -21,8 +21,8 @@ def main():
     xc = EquationsSolver.solve(A, b, method='chase')
     for i in range(dim):
         print('%4d: xc: %8.2f\t\t'
-              '[xj: %8.2f\t jacobi loss: %8.2f]\t\t'
-              '[xg: %8.2f\t gauss_seidel loss: %8.2f]'
+              '[xj: %8.2f\t loss: %8.2f]\t\t'
+              '[xg: %8.2f\t loss: %8.2f]'
               % (i+1, xc[i, 0],
                  xj[i, 0], np.abs(xj[i, 0] - xc[i, 0]),
                  xg[i, 0], np.abs(xg[i, 0] - xc[i, 0])))
