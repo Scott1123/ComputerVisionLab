@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from homework_2.solve_equations import EquationsSolver
+from tool.equations_solver import EquationsSolver
 import numpy as np
 
 
@@ -14,6 +14,7 @@ def main():
                 A[i, j] = -1
     b = np.ones((dim, 1), dtype='f8')
 
+    # compare different methods
     x1 = EquationsSolver.solve(A, b, verbose=1, method='gauss')
     x2 = EquationsSolver.solve(A, b, verbose=1, method='lu')
     x3 = EquationsSolver.solve(A, b, verbose=1, method='chase')
@@ -25,25 +26,6 @@ def main():
     print('-' * 54)
     for i in range(dim):
         print('%8.2f %8.2f %8.2f %8.2f %8.2f %8.2f' % (x1[i], x2[i], x3[i], x4[i], x5[i], x6[i]))
-
-    # compare the answers (Gauss, Jacobi, Gauss_Seidel and SOR method)
-
-    # xg = EquationsSolver.solve(A, b, verbose=1, method='gauss')
-    # xj = EquationsSolver.solve(A, b, verbose=1, method='jacobi')
-    # xgs = EquationsSolver.solve(A, b, verbose=1, method='gauss_seidel')
-    # xt = EquationsSolver.solve(A, b, verbose=1, method='sor')
-    # for i in range(dim):
-    #     print('%4d: [gauss: %8.2f]\t[jacobi: %8.2f]\t[gauss_seidel: %8.2f]\t[sor: %8.2f]\t'
-    #           % (i+1, xg[i, 0], xj[i, 0], xgs[i, 0], xt[i, 0]))
-    #
-    # times = 19
-    # w = 1.75
-    # for i in range(times):
-    #     print('omega: ', w)
-    #     x = EquationsSolver.solve(A, b, method='sor', omega=w)
-    #     w += 0.0125
-    #     # for i in range(dim):
-    #     #     print(x[i, 0], ' ', xt[i, 0])
 
     # Here is other data to test the top four methods
 

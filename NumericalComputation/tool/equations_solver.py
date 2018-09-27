@@ -6,6 +6,7 @@ class EquationsSolver(object):
     """
     This class is for solving equations in some methods, including Gauss, LU decompose, chase, square root.
     add Jacobi itration method, Gauss_Seidel itration mathod.
+    add SOR method.
 
     """
     verbose = 0
