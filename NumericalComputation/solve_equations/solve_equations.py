@@ -9,7 +9,8 @@ class EquationsSolver(object):
 
     """
     eps = 1e-6
-    max_itration_times = 0
+    omega = 1.9375
+    max_itration_times = 100000
 
     @classmethod
     def generate_data(cls, n=10):
@@ -46,7 +47,7 @@ class EquationsSolver(object):
         return A, x, b
 
     @classmethod
-    def solve(cls, A, b, method='gauss', max_itration_times=100000):
+    def solve(cls, A, b, method='gauss', eps=1e-6, max_itration_times=100000, omega=1.9375):
         """
         Solve equations in specified method.
 
@@ -56,16 +57,19 @@ class EquationsSolver(object):
         :param max_itration_times: the maximum rounds of iteration
         :return: the solution x or error information
         """
-        cls.show_equations(A, b)  # only when dim <= 10
+        # cls.show_equations(A, b)  # only when dim <= 10
         start = dt.now()
+        cls.eps = eps
         cls.max_itration_times = max_itration_times
+        cls.omega = omega
         func = {
             'gauss': cls._solve_gauss,
             'lu': cls._solve_lu,
             'chase': cls._solve_chase,
             'square_root': cls._solve_square_root,
             'jacobi': cls._solve_jacobi,
-            'gauss_seidel': cls._solve_gauss_seidel
+            'gauss_seidel': cls._solve_gauss_seidel,
+            'sor': cls._solve_sor
         }.get(method, cls._other_method)
         # make a copy of A and b to make sure they will not be changed.
         A0 = np.copy(A)
@@ -305,7 +309,6 @@ class EquationsSolver(object):
 
     @classmethod
     def _solve_gauss_seidel(cls, A, b):
-        # TODO: judge whether x doesn't change to determine when to stop.
         n = len(A)
 
         # 1. get D, L, U, Bg, fg
@@ -331,7 +334,35 @@ class EquationsSolver(object):
 
     @classmethod
     def _solve_sor(cls, A, b):
-        pass
+        n = len(A)
+
+        # 1. get Bw, fw
+        D = np.zeros((n, n))
+        Dminus_wL = np.zeros((n, n))
+        U = np.zeros((n, n))
+        for i in range(n):
+            for j in range(n):
+                if i == j:
+                    D[i, j] = A[i, j]
+                    Dminus_wL[i, j] = A[i, j]
+                elif i < j:
+                    U[i, j] = -A[i, j]
+                else:
+                    Dminus_wL[i, j] = cls.omega * A[i, j]
+        Dminus_wL_inv = np.linalg.inv(Dminus_wL)
+        Bw = Dminus_wL_inv.dot((1 - cls.omega) * D + cls.omega * U)
+        fw = cls.omega * Dminus_wL_inv.dot(b)
+
+        # 2. x[k+1] = Bw(x[k]) + fw
+        times = 0
+        x = np.zeros((n, 1))
+        b2 = A.dot(x)
+        while times < cls.max_itration_times and not cls._judge_convergence(b2, b):
+            x = Bw.dot(x) + fw
+            b2 = A.dot(x)
+            times += 1
+        print('[sor] itration times:', times)
+        return 1, x
 
     @classmethod
     def _other_method(cls, A, b):

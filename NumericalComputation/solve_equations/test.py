@@ -14,21 +14,24 @@ def main():
                 A[i, j] = -1
     b = np.ones((dim, 1), dtype='f8')
 
-    # compare the two answers (Jacobi, Gauss_Seidel and chase method)
+    # compare the answers (Gauss, Jacobi, Gauss_Seidel and SOR method)
 
+    xg = EquationsSolver.solve(A, b, method='gauss')
     xj = EquationsSolver.solve(A, b, method='jacobi')
-    xg = EquationsSolver.solve(A, b, method='gauss_seidel')
-    xc = EquationsSolver.solve(A, b, method='chase')
-    xt = EquationsSolver.solve(A, b, method='gauss')
+    xgs = EquationsSolver.solve(A, b, method='gauss_seidel')
+    xt = EquationsSolver.solve(A, b, method='sor')
     for i in range(dim):
-        print('%4d: xc: %8.2f\t'
-              '[xj: %8.2f\t loss: %8.2f]\t'
-              '[xg: %8.2f\t loss: %8.2f]\t'
-              '[xt: %8.2f\t loss: %8.2f]\t'
-              % (i+1, xc[i, 0],
-                 xj[i, 0], np.abs(xj[i, 0] - xc[i, 0]),
-                 xg[i, 0], np.abs(xg[i, 0] - xc[i, 0]),
-                 xt[i, 0], np.abs(xt[i, 0] - xc[i, 0])))
+        print('%4d: [gauss: %8.2f]\t[jacobi: %8.2f]\t[gauss_seidel: %8.2f]\t[sor: %8.2f]\t'
+              % (i+1, xg[i, 0], xj[i, 0], xgs[i, 0], xt[i, 0]))
+    #
+    # times = 19
+    # w = 1.75
+    # for i in range(times):
+    #     print('omega: ', w)
+    #     x = EquationsSolver.solve(A, b, method='sor', omega=w)
+    #     w += 0.0125
+    #     # for i in range(dim):
+    #     #     print(x[i, 0], ' ', xt[i, 0])
 
     # Here is other data to test the top four methods
 
