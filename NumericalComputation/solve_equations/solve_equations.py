@@ -8,6 +8,7 @@ class EquationsSolver(object):
     add Jacobi itration method, Gauss_Seidel itration mathod.
 
     """
+    verbose = 0
     eps = 1e-6
     omega = 1.9375
     max_itration_times = 100000
@@ -47,7 +48,7 @@ class EquationsSolver(object):
         return A, x, b
 
     @classmethod
-    def solve(cls, A, b, method='gauss', eps=1e-6, max_itration_times=100000, omega=1.9375):
+    def solve(cls, A, b, method='gauss', verbose=0, eps=1e-6, max_itration_times=100000, omega=1.9375):
         """
         Solve equations in specified method.
 
@@ -59,6 +60,7 @@ class EquationsSolver(object):
         """
         # cls.show_equations(A, b)  # only when dim <= 10
         start = dt.now()
+        cls.verbose = verbose
         cls.eps = eps
         cls.max_itration_times = max_itration_times
         cls.omega = omega
@@ -75,25 +77,26 @@ class EquationsSolver(object):
         A0 = np.copy(A)
         b0 = np.copy(b)
         flag, answer = func(A0, b0)
-        if flag == -1:
-            print('This method is not supported!\n'
-                  'Please choose one from these:\n'
-                  '(gauss, lu, chase, square_root, jacobi, gauss_seidel).')
-        elif flag == 0:
-            print('No Answer! det(A) = 0.')
-        elif flag == 1:
-            print('[%s] Success!' % method)
-        elif flag == 2:
-            print('No Answer! Matrix A is not a tridiagonal matrix.')
-        elif flag == 3:
-            print('No Answer! The main diagonal of Matrix A is not big enough.')
-        elif flag == 4:
-            print('No Answer! Matrix A is not a symmetric matrix.')
-        elif flag == 5:
-            print('No Answer! Matrix A is not a positive definite matrix.')
-        elif flag == 6:
-            print('No Answer! A[i, i] == 0 for some i.')
-        print('[%s] time cost: %.4f s.' % (method, (dt.now() - start).total_seconds()))
+        if cls.verbose == 1:
+            print('[%s]' % method, end=' ')
+            if flag == -1:
+                print('This method is not supported!(gauss, lu, chase, square_root, jacobi, gauss_seidel, sor).')
+            elif flag == 0:
+                print('No Answer! det(A) = 0.')
+            elif flag == 1:
+                print('Success!')
+            elif flag == 2:
+                print('No Answer! Matrix A is not a tridiagonal matrix.')
+            elif flag == 3:
+                print('No Answer! The main diagonal of Matrix A is not big enough.')
+            elif flag == 4:
+                print('No Answer! Matrix A is not a symmetric matrix.')
+            elif flag == 5:
+                print('No Answer! Matrix A is not a positive definite matrix.')
+            elif flag == 6:
+                print('No Answer! A[i, i] == 0 for some i.')
+            print('[%s] time cost: %.4f s.' % (method, (dt.now() - start).total_seconds()))
+
         return answer
 
     @classmethod
@@ -127,7 +130,6 @@ class EquationsSolver(object):
             # update(k)
             for i in range(k + 1, n):
                 A[i, k] = A[i, k] / A[k, k]
-                # print('---- ', A[i, k])
                 for j in range(k + 1, n):
                     A[i, j] = A[i, j] - (A[i, k] * A[k, j])
                 b[i, 0] = b[i, 0] - (A[i, k] * b[k, 0])
@@ -135,7 +137,7 @@ class EquationsSolver(object):
         if np.abs(A[n - 1, n - 1]) < cls.eps:
             return 0, None
 
-        # 2. solve Ax = b
+        # 2. solve Ax = b (x is stored in b)
         b[n - 1, 0] /= A[n - 1, n - 1]
         for i in range(n - 2, -1, -1):
             tmp_sum = 0
@@ -178,25 +180,25 @@ class EquationsSolver(object):
                 tmp_sum += (A[k, j] * y[j, 0])
             y[k, 0] = b[k, 0] - tmp_sum
 
-        # 3. solve Ux = y
-        x = np.zeros((n, 1))
-        x[n-1, 0] = y[n-1, 0] / A[n-1, n-1]
+        # 3. solve Ux = y (x is stored in b)
+        b[n-1, 0] = y[n-1, 0] / A[n-1, n-1]
         for k in range(n-2, -1, -1):
             tmp_sum = 0
             for j in range(k+1, n):
-                tmp_sum += (A[k, j] * x[j, 0])
-            x[k, 0] = (y[k, 0] - tmp_sum) / A[k, k]
+                tmp_sum += (A[k, j] * b[j, 0])
+            b[k, 0] = (y[k, 0] - tmp_sum) / A[k, k]
 
-        return 1, x
+        return 1, b
 
     @classmethod
     def _solve_chase(cls, A, f):
+        n = len(A)
+
         # 0. judge whether A is a tridiagonal matrix
         if not cls._judge_tridiagonal_matrix(A):
             return 2, None
 
         # 1. get diags and check main diagonal
-        n = len(A)
         a, b, c = np.zeros(n), np.zeros(n), np.zeros(n)  # b is the main diag
         b[0] = A[0, 0]
         for i in range(1, n):
@@ -225,13 +227,12 @@ class EquationsSolver(object):
         for i in range(1, n):
             y[i, 0] = (f[i, 0] - a[i] * y[i - 1, 0]) / (b[i] - a[i] * beta[i - 1])
 
-        # 4. solve Ux = y
-        x = np.zeros((n, 1))
-        x[n-1, 0] = y[n-1, 0]
+        # 4. solve Ux = y (x is stored in f)
+        f[n-1, 0] = y[n-1, 0]
         for i in range(n-2, -1, -1):
-            x[i, 0] = y[i] - (beta[i] * x[i + 1, 0])
+            f[i, 0] = y[i] - (beta[i] * f[i + 1, 0])
 
-        return 1, x
+        return 1, f
 
     @classmethod
     def _solve_square_root(cls, A, b):
@@ -243,43 +244,41 @@ class EquationsSolver(object):
         if not cls._judge_positive_definite_matrix(A):
             return 5, None
 
-        # 1. get L
-        L = np.zeros((n, n))
-        L[0, 0] = np.sqrt(A[0, 0])
+        # 1. get L (L is stored in A to save space)
+        A[0, 0] = np.sqrt(A[0, 0])
         for i in range(1, n):
-            L[i, 0] = A[i, 0] / L[0, 0]
+            A[i, 0] = A[i, 0] / A[0, 0]
         for j in range(1, n):
-            # calculate L[j, j] first
+            # calculate A[j, j] first
             tmp_sum = 0
             for k in range(0, j):
-                tmp_sum += (L[j, k] * L[j, k])
-            L[j, j] = np.sqrt(A[j, j] - tmp_sum)
-            # calculate coefficients under L[j, j]
-            for i in range(j+1, n):
+                tmp_sum += (A[j, k] * A[j, k])
+            A[j, j] = np.sqrt(A[j, j] - tmp_sum)
+            # calculate coefficients under A[j, j]
+            for i in range(j + 1, n):
                 tmp_sum = 0
                 for k in range(0, j):
-                    tmp_sum += (L[i, k] * L[j, k])
-                L[i, j] = (A[i, j] - tmp_sum) / L[j, j]
+                    tmp_sum += (A[i, k] * A[j, k])
+                A[i, j] = (A[i, j] - tmp_sum) / A[j, j]
 
         # 2. solve Ly = b
         y = np.zeros((n, 1))
-        y[0, 0] = b[0, 0] / L[0, 0]
+        y[0, 0] = b[0, 0] / A[0, 0]
         for i in range(1, n):
             tmp_sum = 0
             for k in range(0, i):
-                tmp_sum += (L[i, k] * y[k, 0])
-            y[i, 0] = (b[i, 0] - tmp_sum) / L[i, i]
+                tmp_sum += (A[i, k] * y[k, 0])
+            y[i, 0] = (b[i, 0] - tmp_sum) / A[i, i]
 
-        # 3. solve L(T)x = y
-        x = np.zeros((n, 1))
-        x[n-1, 0] = y[n-1] / L[n-1, n-1]
-        for i in range(n-2, -1, -1):
+        # 3. solve L(T)x = y (x is stored in b)
+        b[n - 1, 0] = y[n - 1] / A[n - 1, n - 1]
+        for i in range(n - 2, -1, -1):
             tmp_sum = 0
-            for k in range(i+1, n):
-                tmp_sum += (L[k, i] * x[k, 0])
-            x[i] = (y[i, 0] - tmp_sum) / L[i, i]
+            for k in range(i + 1, n):
+                tmp_sum += (A[k, i] * b[k, 0])
+            b[i] = (y[i, 0] - tmp_sum) / A[i, i]
 
-        return 1, x
+        return 1, b
 
     @classmethod
     def _solve_jacobi(cls, A, b):
@@ -304,7 +303,7 @@ class EquationsSolver(object):
             x = Bj.dot(x) + fj
             b2 = A.dot(x)
             times += 1
-        print('[jacobi] itration times:', times)
+        if cls.verbose: print('[jacobi] itration times:', times)
         return 1, x
 
     @classmethod
@@ -329,7 +328,7 @@ class EquationsSolver(object):
             x = Bg.dot(x) + fg
             b2 = A.dot(x)
             times += 1
-        print('[gauss_seidel] itration times:', times)
+        if cls.verbose: print('[gauss_seidel] itration times:', times)
         return 1, x
 
     @classmethod
@@ -361,7 +360,7 @@ class EquationsSolver(object):
             x = Bw.dot(x) + fw
             b2 = A.dot(x)
             times += 1
-        print('[sor] itration times:', times)
+        if cls.verbose: print('[sor] itration times:', times)
         return 1, x
 
     @classmethod
@@ -409,4 +408,4 @@ class EquationsSolver(object):
     # made for jacobi and gauss_seidel
     @classmethod
     def _judge_convergence(cls, b2, b):
-        return np.all(np.abs(b2 - b) < cls.eps)
+        return np.linalg.norm(b2 - b, ord=2) / np.linalg.norm(b, ord=2) < cls.eps

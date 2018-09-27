@@ -14,15 +14,27 @@ def main():
                 A[i, j] = -1
     b = np.ones((dim, 1), dtype='f8')
 
+    x1 = EquationsSolver.solve(A, b, verbose=1, method='gauss')
+    x2 = EquationsSolver.solve(A, b, verbose=1, method='lu')
+    x3 = EquationsSolver.solve(A, b, verbose=1, method='chase')
+    x4 = EquationsSolver.solve(A, b, verbose=1, method='jacobi')
+    x5 = EquationsSolver.solve(A, b, verbose=1, method='gauss_seidel')
+    x6 = EquationsSolver.solve(A, b, verbose=1, method='sor')
+
+    print('%8s %8s %8s %8s %8s %8s' % ('Gauss', 'LU', 'chase', 'Jacobi', 'GauSeid', 'SOR'))
+    print('-' * 54)
+    for i in range(dim):
+        print('%8.2f %8.2f %8.2f %8.2f %8.2f %8.2f' % (x1[i], x2[i], x3[i], x4[i], x5[i], x6[i]))
+
     # compare the answers (Gauss, Jacobi, Gauss_Seidel and SOR method)
 
-    xg = EquationsSolver.solve(A, b, method='gauss')
-    xj = EquationsSolver.solve(A, b, method='jacobi')
-    xgs = EquationsSolver.solve(A, b, method='gauss_seidel')
-    xt = EquationsSolver.solve(A, b, method='sor')
-    for i in range(dim):
-        print('%4d: [gauss: %8.2f]\t[jacobi: %8.2f]\t[gauss_seidel: %8.2f]\t[sor: %8.2f]\t'
-              % (i+1, xg[i, 0], xj[i, 0], xgs[i, 0], xt[i, 0]))
+    # xg = EquationsSolver.solve(A, b, verbose=1, method='gauss')
+    # xj = EquationsSolver.solve(A, b, verbose=1, method='jacobi')
+    # xgs = EquationsSolver.solve(A, b, verbose=1, method='gauss_seidel')
+    # xt = EquationsSolver.solve(A, b, verbose=1, method='sor')
+    # for i in range(dim):
+    #     print('%4d: [gauss: %8.2f]\t[jacobi: %8.2f]\t[gauss_seidel: %8.2f]\t[sor: %8.2f]\t'
+    #           % (i+1, xg[i, 0], xj[i, 0], xgs[i, 0], xt[i, 0]))
     #
     # times = 19
     # w = 1.75
@@ -62,8 +74,8 @@ def main():
     # A = np.array([[4, 2, -2], [2, 2, -3], [-2, -3, 14]])
     # x = np.array([[2], [2], [1]])
     # b = np.array([[10], [5], [4]])
-
-    # x2 = EquationsSolver.solve(A, b)
+    #
+    # x2 = EquationsSolver.solve(A, b, method='square_root')
     # print(x2)
     # print(x)
 
