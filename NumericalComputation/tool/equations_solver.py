@@ -7,6 +7,7 @@ class EquationsSolver(object):
     This class is for solving equations in some methods, including Gauss, LU decompose, chase, square root.
     add Jacobi itration method, Gauss_Seidel itration mathod.
     add SOR method.
+    add Conjugate Gradient Method.
 
     """
     verbose = 0
@@ -56,8 +57,11 @@ class EquationsSolver(object):
         :param A: coefficient matrix of the equations
         :param b: vector
         :param method: the way to solve equations
-        :param max_itration_times: the maximum rounds of iteration
-        :return: the solution x or error information
+        :param verbose: whether show the running information
+        :param eps: *epsilon*
+        :param max_itration_times: the maximum *rounds* of iteration
+        :param omega: *relaxation factor* for SOR method.
+        :return: the solution x or 'None' if error occurs
         """
         # cls.show_equations(A, b)  # only when dim <= 10
         start = dt.now()
@@ -72,7 +76,9 @@ class EquationsSolver(object):
             'square_root': cls._solve_square_root,
             'jacobi': cls._solve_jacobi,
             'gauss_seidel': cls._solve_gauss_seidel,
-            'sor': cls._solve_sor
+            'sor': cls._solve_sor,
+            'cg': cls._solve_cg,
+            'qr': cls._solve_qr
         }.get(method, cls._other_method)
         # make a copy of A and b to make sure they will not be changed.
         A0 = np.copy(A)
@@ -363,6 +369,33 @@ class EquationsSolver(object):
             times += 1
         if cls.verbose: print('[sor] itration times:', times)
         return 1, x
+
+    @classmethod
+    def _solve_cg(cls, A, b):
+        n = len(A)
+        x = np.zeros((n, 1))
+        r = b - A.dot(x)
+        p = r.copy()
+
+        for k in range(1, n):
+            tmp_Ap = A.dot(p)
+            tmp1 = np.vdot(p, tmp_Ap)
+            if np.abs(tmp1) < cls.eps:
+                break
+            _a = np.vdot(r, r) / tmp1
+            x = x + _a * p
+            r = r - _a * tmp_Ap
+            tmp2 = np.vdot(p, tmp_Ap)
+            if np.abs(tmp2) < cls.eps:
+                break
+            _b = - np.vdot(r, tmp_Ap) / tmp2
+            p = r + _b * p
+        return 1, x
+
+    @classmethod
+    def _solve_qr(cls, A, b):
+        # TODO: implementation of QR
+        pass
 
     @classmethod
     def _other_method(cls, A, b):

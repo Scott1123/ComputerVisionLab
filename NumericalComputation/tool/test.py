@@ -15,17 +15,26 @@ def main():
     b = np.ones((dim, 1), dtype='f8')
 
     # compare different methods
-    x1 = EquationsSolver.solve(A, b, verbose=1, method='gauss')
-    x2 = EquationsSolver.solve(A, b, verbose=1, method='lu')
-    x3 = EquationsSolver.solve(A, b, verbose=1, method='chase')
-    x4 = EquationsSolver.solve(A, b, verbose=1, method='jacobi')
-    x5 = EquationsSolver.solve(A, b, verbose=1, method='gauss_seidel')
-    x6 = EquationsSolver.solve(A, b, verbose=1, method='sor')
+    methods_list = ['gauss', 'lu', 'chase', 'jacobi', 'gauss_seidel', 'sor', 'cg']
+    methods_num = len(methods_list)
 
-    print('%8s %8s %8s %8s %8s %8s' % ('Gauss', 'LU', 'chase', 'Jacobi', 'GauSeid', 'SOR'))
-    print('-' * 54)
-    for i in range(dim):
-        print('%8.2f %8.2f %8.2f %8.2f %8.2f %8.2f' % (x1[i], x2[i], x3[i], x4[i], x5[i], x6[i]))
+    # get solution
+    solution_x = []
+    for i in range(methods_num):
+        tmp_x = EquationsSolver.solve(A, b, verbose=1, method=methods_list[i])
+        solution_x.append(tmp_x)
+
+    # make table head
+    for i in range(methods_num):
+        print('%12s' % methods_list[i], end=' ')
+    print()
+    print('-' * (12 * methods_num))
+
+    # show solution
+    for k in range(dim):
+        for i in range(methods_num):
+            print('%12.2f' % solution_x[i][k], end=' ')
+        print()
 
     # Here is other data to test the top four methods
 
