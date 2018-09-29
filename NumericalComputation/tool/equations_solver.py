@@ -121,6 +121,8 @@ class EquationsSolver(object):
                 print('No Answer! Matrix A is not a positive definite matrix.')
             elif flag == 6:
                 print('No Answer! A[i, i] == 0 for some i.')
+            elif flag == 7:
+                print('No Answer! Omega must in range(0, 2).')
             print('[%s] time cost: %.4f s.' % (method, (dt.now() - start).total_seconds()))
 
         return answer
@@ -362,6 +364,15 @@ class EquationsSolver(object):
     @classmethod
     def _solve_sor(cls, A, b):
         n = len(A)
+
+        # 0. judge whether A is a symmetric and positive definite matrix
+        #    judge whether 0 < omega < 2
+        if not cls._judge_symmetric_matrix(A):
+            return 4, None
+        if not cls._judge_positive_definite_matrix(A):
+            return 5, None
+        if cls.omega <= 0 or cls.omega >= 2:
+            return 7, None
 
         # 1. get Bw, fw
         D = np.zeros((n, n))

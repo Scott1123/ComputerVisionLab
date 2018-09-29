@@ -20,6 +20,7 @@ def test_methods(A, b, methods_list):
     print('-' * (13 * methods_num))
 
     # show solution
+    # TODO: show x(None)
     for k in range(dim):
         for i in range(methods_num):
             print('%12.2f' % solution_x[i][k, 0], end=' ')
