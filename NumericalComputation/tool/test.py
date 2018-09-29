@@ -4,7 +4,7 @@
 # @Author: Scott Yang
 # @File  : test.py
 
-from tool.equations_solver import EquationsSolver
+from equations_solver import EquationsSolver
 dim = 100
 
 
