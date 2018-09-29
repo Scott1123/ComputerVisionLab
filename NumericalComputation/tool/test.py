@@ -27,7 +27,7 @@ def test_methods(A, b, methods_list):
 
 
 def main():
-    A, b = EquationsSolver.generate_homework_data(dim=100)
+    A, b = EquationsSolver.generate_homework_data(dim=dim)
     # methods_list = ['gauss', 'lu', 'chase', 'jacobi', 'gauss_seidel', 'sor', 'cg']
     methods_list = ['qr']
     test_methods(A, b, methods_list)
