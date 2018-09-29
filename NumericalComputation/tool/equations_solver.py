@@ -16,7 +16,24 @@ class EquationsSolver(object):
     max_itration_times = 100000
 
     @classmethod
-    def generate_data(cls, n=10):
+    def generate_homework_data(cls, dim=100):
+        """
+        Generate homework data.
+        :param dim: the dimension of Matrix A
+        :return: matrix A, b
+        """
+        A = np.zeros((dim, dim), dtype='f8')
+        for i in range(dim):
+            for j in range(dim):
+                if i == j:
+                    A[i, j] = 2
+                elif np.abs(i - j) == 1:
+                    A[i, j] = -1
+        b = np.ones((dim, 1), dtype='f8')
+        return A, b
+
+    @classmethod
+    def generate_random_data(cls, n=10):
         """
         Generate Unrestricted Matrix A, and vector x and b.
         :param n: the scale of matrix
@@ -81,6 +98,7 @@ class EquationsSolver(object):
             'qr': cls._solve_qr
         }.get(method, cls._other_method)
         # make a copy of A and b to make sure they will not be changed.
+        cls.show_equations(A, b)
         A0 = np.copy(A)
         b0 = np.copy(b)
         flag, answer = func(A0, b0)
@@ -220,7 +238,7 @@ class EquationsSolver(object):
         # 2. get alpha/beta/gamma
         alpha = np.zeros(n)
         beta = np.zeros(n)
-        gamma = a[0:n]
+        gamma = a.copy()
         beta[0] = c[0] / b[0]
         for i in range(1, n-1):
             beta[i] = c[i] / (b[i] - a[i] * beta[i - 1])
@@ -310,7 +328,8 @@ class EquationsSolver(object):
             x = Bj.dot(x) + fj
             b2 = A.dot(x)
             times += 1
-        if cls.verbose: print('[jacobi] itration times:', times)
+        if cls.verbose:
+            print('[jacobi] itration times:', times)
         return 1, x
 
     @classmethod
@@ -335,7 +354,8 @@ class EquationsSolver(object):
             x = Bg.dot(x) + fg
             b2 = A.dot(x)
             times += 1
-        if cls.verbose: print('[gauss_seidel] itration times:', times)
+        if cls.verbose:
+            print('[gauss_seidel] itration times:', times)
         return 1, x
 
     @classmethod
@@ -367,7 +387,8 @@ class EquationsSolver(object):
             x = Bw.dot(x) + fw
             b2 = A.dot(x)
             times += 1
-        if cls.verbose: print('[sor] itration times:', times)
+        if cls.verbose:
+            print('[sor] itration times:', times)
         return 1, x
 
     @classmethod
@@ -395,7 +416,29 @@ class EquationsSolver(object):
     @classmethod
     def _solve_qr(cls, A, b):
         # TODO: implementation of QR
-        pass
+        n, m = A.shape
+
+        # 1. get Q(here Q is Q.T), R
+        Q = np.zeros((m, n))
+        Q[0] = A[:, 0] / np.linalg.norm(A[:, 0], ord=2)
+        for j in range(1, m):
+            tmp_sum = np.zeros(n)
+            for i in range(j):
+                tmp_sum = tmp_sum + np.vdot(A[:, j], Q[i]) * Q[i]
+            Q[j] = A[:, j] - tmp_sum
+            Q[j] = Q[j] / np.linalg.norm(Q[j], ord=2)
+        R = np.dot(Q, A)
+        f = np.dot(Q, b)
+
+        # 2. solve Rx = Q(T)b = f (x is stored in b)
+        b[m - 1, 0] = f[m - 1, 0] / R[m - 1, m - 1]
+        for k in range(m - 2, -1, -1):
+            tmp_sum = 0
+            for j in range(k + 1, m):
+                tmp_sum += (R[k, j] * b[j, 0])
+            b[k, 0] = (f[k, 0] - tmp_sum) / R[k, k]
+
+        return 1, b
 
     @classmethod
     def _other_method(cls, A, b):

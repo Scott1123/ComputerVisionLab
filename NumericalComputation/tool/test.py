@@ -1,21 +1,10 @@
 #!/usr/bin/python3
 from tool.equations_solver import EquationsSolver
-import numpy as np
+dim = 100
 
 
-def main():
-    dim = 100
-    A = np.zeros((dim, dim), dtype='f8')
-    for i in range(dim):
-        for j in range(dim):
-            if i == j:
-                A[i, j] = 2
-            elif np.abs(i - j) == 1:
-                A[i, j] = -1
-    b = np.ones((dim, 1), dtype='f8')
-
-    # compare different methods
-    methods_list = ['gauss', 'lu', 'chase', 'jacobi', 'gauss_seidel', 'sor', 'cg']
+# test different methods
+def test_methods(A, b, methods_list):
     methods_num = len(methods_list)
 
     # get solution
@@ -28,14 +17,17 @@ def main():
     for i in range(methods_num):
         print('%12s' % methods_list[i], end=' ')
     print()
-    print('-' * (12 * methods_num))
+    print('-' * (13 * methods_num))
 
     # show solution
     for k in range(dim):
         for i in range(methods_num):
-            print('%12.2f' % solution_x[i][k], end=' ')
+            print('%12.2f' % solution_x[i][k, 0], end=' ')
         print()
 
+
+def get_my_data():
+    pass
     # Here is other data to test the top four methods
 
     # A = np.random.randint(0, 10, (dim, dim)) + np.eye(dim)
@@ -65,10 +57,13 @@ def main():
     # A = np.array([[4, 2, -2], [2, 2, -3], [-2, -3, 14]])
     # x = np.array([[2], [2], [1]])
     # b = np.array([[10], [5], [4]])
-    #
-    # x2 = EquationsSolver.solve(A, b, method='square_root')
-    # print(x2)
-    # print(x)
+
+
+def main():
+    A, b = EquationsSolver.generate_homework_data(dim=100)
+    # methods_list = ['gauss', 'lu', 'chase', 'jacobi', 'gauss_seidel', 'sor', 'cg']
+    methods_list = ['qr']
+    test_methods(A, b, methods_list)
 
 
 if __name__ == '__main__':
