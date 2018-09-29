@@ -8,6 +8,7 @@ class EquationsSolver(object):
     add Jacobi itration method, Gauss_Seidel itration mathod.
     add SOR method.
     add Conjugate Gradient Method.
+    add QR method.
 
     """
     verbose = 0
@@ -415,7 +416,6 @@ class EquationsSolver(object):
 
     @classmethod
     def _solve_qr(cls, A, b):
-        # TODO: implementation of QR
         n, m = A.shape
 
         # 1. get Q(here Q is Q.T), R
