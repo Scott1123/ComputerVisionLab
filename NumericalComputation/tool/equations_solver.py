@@ -1,3 +1,16 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+# @Time  : 2018/9/18 19:17
+# @Author: Scott Yang
+# @File  : test.py
+
+"""
+
+This is an equations solver.
+
+Provides some classic methods to solve equations.
+
+"""
 import numpy as np
 from datetime import datetime as dt
 

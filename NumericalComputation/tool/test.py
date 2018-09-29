@@ -1,4 +1,9 @@
-#!/usr/bin/python3
+# !/usr/bin/python3
+# encoding: utf-8
+# @Time  : 2018/9/18 19:17
+# @Author: Scott Yang
+# @File  : test.py
+
 from tool.equations_solver import EquationsSolver
 dim = 100
 
