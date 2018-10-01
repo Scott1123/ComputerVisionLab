@@ -1,11 +1,11 @@
 # !/usr/bin/python3
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 # @Time  : 2018/9/18 19:17
 # @Author: Scott Yang
 # @File  : test.py
 
-from equations_solver import EquationsSolver
-dim = 100
+import equations_solver
+n = 100  # the scale of the Matrix
 
 
 # test different methods
@@ -15,7 +15,7 @@ def test_methods(A, b, methods_list):
     # get solution
     solution_x = []
     for i in range(methods_num):
-        tmp_x = EquationsSolver.solve(A, b, verbose=1, method=methods_list[i])
+        tmp_x = equations_solver.solve(A, b, verbose=1, method=methods_list[i])
         solution_x.append(tmp_x)
 
     # make table head
@@ -25,19 +25,24 @@ def test_methods(A, b, methods_list):
     print('-' * (13 * methods_num))
 
     # show solution
-    # TODO: show x(None)
-    for k in range(dim):
+    for k in range(n):
         for i in range(methods_num):
             print('%12.2f' % solution_x[i][k, 0], end=' ')
         print()
 
 
 def main():
-    A, b = EquationsSolver.generate_homework_data(dim=dim)
+    A, b = equations_solver.generate_homework_data()
     # methods_list_all = ['gauss', 'lu', 'chase', 'square_root',
     #                     'jacobi', 'gauss_seidel', 'sor',
     #                     'cg', 'qr']
-    methods_list = ['qr']
+    methods_list = [
+        'jacobi',
+        'gauss_seidel',
+        'sor',
+        'cg',
+        'qr'
+        ]
     test_methods(A, b, methods_list)
 
 
@@ -47,8 +52,8 @@ if __name__ == '__main__':
 
 # Here is other data to test the top four methods
 
-# A = np.random.randint(0, 10, (dim, dim)) + np.eye(dim)
-# x = np.arange(1, dim + 1).reshape((dim, 1))
+# A = np.random.randint(0, 10, (n, n)) + np.eye(n)
+# x = np.arange(1, n + 1).reshape((n, 1))
 # b = A.dot(x)
 # x = EquationsSolver.solve(A, b, method='Gauss')
 # x = EquationsSolver.solve(A, b, method='LU')
