@@ -3,7 +3,7 @@ Numerical Computation
 -------------------------
 
 
-This is a `solver`.
+This is a *solver*.
 
 Implements some methods for solving equations, including
 Gauss, LU decompose, chase, square root,
@@ -12,7 +12,7 @@ SOR method, Conjugate Gradient Method, QR method.
 
 **Files:**
 
-* equations_solver.py: the class EquationsSolver
+* equations_solver.py: some methods to solve equations.
 * test.py: the main script to run
 
 
@@ -27,8 +27,8 @@ with default data(matrix A(100*100 dim) and b(100*1 dim))
 
 **Tips:**
 
-- if you want to test different methods, just add them to *methods_list* at line 39 in test.py.
-- if you want to change the dimension of matrix A, you can modify *dim* at line 8 in test.py.
+- if you want to test different methods, just add them to *methods_list* in test.py-main().
+- if you want to change the dimension of matrix A, you can modify *n* in the front of test.py.
 
 
 :Time:   2018/10/1
