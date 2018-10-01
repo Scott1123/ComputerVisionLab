@@ -33,6 +33,12 @@ def test_methods(A, b, methods_list):
 
 def main():
     A, b = equations_solver.generate_homework_data()
+    # 1. test single method.
+    # x = equations_solver.gauss(A, b)
+    # or
+    # x = equations_solver.solve(A, b, 'gauss')
+
+    # 2. compare different methods.
     # methods_list_all = ['gauss', 'lu', 'chase', 'square_root',
     #                     'jacobi', 'gauss_seidel', 'sor',
     #                     'cg', 'qr']

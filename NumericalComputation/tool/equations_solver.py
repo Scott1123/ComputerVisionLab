@@ -39,57 +39,6 @@ class EquaSolError(Exception):
     pass
 
 
-def generate_homework_data(n=100):
-    """
-    Generate homework data.
-    :param n: the scale of matrix
-    :return: matrix A, b
-    """
-    A = np.zeros((n, n), dtype='f8')
-    for i in range(n):
-        for j in range(n):
-            if i == j:
-                A[i, j] = 2
-            elif np.abs(i - j) == 1:
-                A[i, j] = -1
-    b = np.ones((n, 1), dtype='f8')
-    return A, b
-
- 
-def generate_random_data(n=10):
-    """
-    Generate Unrestricted Matrix A, and vector x and b.
-    :param n: the scale of matrix
-    :return: matrix A, x, b
-    """
-    A = np.random.randint(0, 10, (n, n))
-    A = A + np.eye(n)
-    x = np.random.randint(1, 10, (n, 1))
-    b = A.dot(x)
-    return A, x, b
-
- 
-def generate_tridiagonal_matrix(n=10):
-    """
-    Generate Tridiagonal Matrix A, and vector x and b.
-    :param n: the scale of matrix
-    :return: matrix A, x, b
-    """
-    A = np.zeros((n, n))
-    # diag_2 is the main diag
-    diag_1 = np.random.randint(1, 8, n)
-    diag_2 = np.random.randint(20, 30, n)
-    diag_3 = np.random.randint(1, 8, n)
-    A[0, 0] = diag_2[0]
-    for i in range(1, n):
-        A[i, i-1] = diag_1[i]
-        A[i, i] = diag_2[i]
-        A[i-1, i] = diag_3[i]
-    x = np.random.randint(1, 10, (n, 1))
-    b = A.dot(x)
-    return A, x, b
-
-
 def _raise_equasolerror_det_0(method):
     raise EquaSolError('[%s] det(A) = 0.' % method)
 
@@ -123,6 +72,57 @@ def _raise_equasolerror_no_method(method):
                        '(gauss, lu, chase, square_root, jacobi, gauss_seidel, sor, cg, qr).'
                        % method)
 
+
+def generate_homework_data(n=100):
+    """
+    Generate homework data.
+    :param n: the scale of matrix
+    :return: matrix A, b
+    """
+    A = np.zeros((n, n), dtype='f8')
+    for i in range(n):
+        for j in range(n):
+            if i == j:
+                A[i, j] = 2
+            elif np.abs(i - j) == 1:
+                A[i, j] = -1
+    b = np.ones((n, 1), dtype='f8')
+    return A, b
+
+
+def generate_random_data(n=10):
+    """
+    Generate Unrestricted Matrix A, and vector x and b.
+    :param n: the scale of matrix
+    :return: matrix A, x, b
+    """
+    A = np.random.randint(0, 10, (n, n))
+    A = A + np.eye(n)
+    x = np.random.randint(1, 10, (n, 1))
+    b = A.dot(x)
+    return A, x, b
+
+
+def generate_tridiagonal_matrix(n=10):
+    """
+    Generate Tridiagonal Matrix A, and vector x and b.
+    :param n: the scale of matrix
+    :return: matrix A, x, b
+    """
+    A = np.zeros((n, n))
+    # diag_2 is the main diag
+    diag_1 = np.random.randint(1, 8, n)
+    diag_2 = np.random.randint(20, 30, n)
+    diag_3 = np.random.randint(1, 8, n)
+    A[0, 0] = diag_2[0]
+    for i in range(1, n):
+        A[i, i - 1] = diag_1[i]
+        A[i, i] = diag_2[i]
+        A[i - 1, i] = diag_3[i]
+    x = np.random.randint(1, 10, (n, 1))
+    b = A.dot(x)
+    return A, x, b
+
  
 def solve(A, b, method='gauss', verbose=0, eps=1e-6, max_itration_times=100000, omega=1.9375):
     """
@@ -137,7 +137,7 @@ def solve(A, b, method='gauss', verbose=0, eps=1e-6, max_itration_times=100000, 
     :param omega: *relaxation factor* for SOR method.
     :return: the solution x or 'None' if error occurs
     """
-    # cls.show_equations(A, b)  # only when dim <= 10
+    # _show_equations(A, b)  # only when dim <= 10
     start = dt.now()
     global _verbose, _eps, _max_itration_times, _omega
     _verbose = verbose
@@ -145,15 +145,15 @@ def solve(A, b, method='gauss', verbose=0, eps=1e-6, max_itration_times=100000, 
     _max_itration_times = max_itration_times
     _omega = omega
     func = {
-        'gauss': _solve_gauss,
-        'lu': _solve_lu,
-        'chase': _solve_chase,
-        'square_root': _solve_square_root,
-        'jacobi': _solve_jacobi,
-        'gauss_seidel': _solve_gauss_seidel,
-        'sor': _solve_sor,
-        'cg': _solve_cg,
-        'qr': _solve_qr
+        'gauss': gauss,
+        'lu': lu,
+        'chase': chase,
+        'square_root': square_root,
+        'jacobi': jacobi,
+        'gauss_seidel': gauss_seidel,
+        'sor': sor,
+        'cg': cg,
+        'qr': qr
     }.get(method, 'other_method')
     if func == 'other_method':
         _raise_equasolerror_no_method(method)
@@ -168,7 +168,7 @@ def solve(A, b, method='gauss', verbose=0, eps=1e-6, max_itration_times=100000, 
     return answer
 
  
-def show_equations(A, b):
+def _show_equations(A, b):
     n = len(A)
     if n <= 10:
         print('Here is the equations:')
@@ -179,7 +179,7 @@ def show_equations(A, b):
         print('===========================================')
 
  
-def _solve_gauss(A, b):
+def gauss(A, b):
     n = len(A)
     # 1. update coefficient
     for k in range(n - 1):
@@ -216,7 +216,7 @@ def _solve_gauss(A, b):
     return b
 
  
-def _solve_lu(A, b):
+def lu(A, b):
     # Doolittle method
     n = len(A)
 
@@ -258,7 +258,7 @@ def _solve_lu(A, b):
     return b
 
  
-def _solve_chase(A, f):
+def chase(A, f):
     n = len(A)
 
     # 0. judge whether A is a tridiagonal matrix
@@ -301,7 +301,7 @@ def _solve_chase(A, f):
     return f
 
  
-def _solve_square_root(A, b):
+def square_root(A, b):
     n = len(A)
 
     # 0. judge whether A is a symmetric and positive definite matrix
@@ -346,7 +346,7 @@ def _solve_square_root(A, b):
     return b
 
  
-def _solve_jacobi(A, b):
+def jacobi(A, b):
     n = len(A)
 
     # 1. judge main diagonal and get Dc, L+U, Bj, fj
@@ -373,7 +373,7 @@ def _solve_jacobi(A, b):
     return x
 
  
-def _solve_gauss_seidel(A, b):
+def gauss_seidel(A, b):
     n = len(A)
 
     # 1. get D, L, U, Bg, fg
@@ -400,7 +400,7 @@ def _solve_gauss_seidel(A, b):
     return x
 
  
-def _solve_sor(A, b):
+def sor(A, b):
     n = len(A)
 
     # 0. judge whether A is a symmetric and positive definite matrix
@@ -443,7 +443,7 @@ def _solve_sor(A, b):
     return x
 
  
-def _solve_cg(A, b):
+def cg(A, b):
     n = len(A)
     x = np.zeros((n, 1))
     r = b - A.dot(x)
@@ -466,7 +466,7 @@ def _solve_cg(A, b):
     return x
 
  
-def _solve_qr(A, b):
+def qr(A, b):
     n, m = A.shape
 
     # 1. get Q(here Q is Q.T), R
