@@ -6,7 +6,7 @@
 
 """
 
-This is an solver.
+This is a solver.
 Solve a linear matrix equation, or system of linear scalar equations.
 
 Provides some classic methods, including Gauss, LU decompose, chase, square root.
