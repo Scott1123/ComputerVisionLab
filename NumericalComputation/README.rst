@@ -31,6 +31,6 @@ with default data(matrix A(100*100 dim) and b(100*1 dim))
 - if you want to change the dimension of matrix A, you can modify *n* in the front of test.py.
 
 
-:Time:   2018/10/1
-:Author: Yang Lingyu
+:Time:   2018/9/28
+:Author: Scott Yang
 
