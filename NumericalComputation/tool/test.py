@@ -36,7 +36,7 @@ def main():
     # 1. test single method.
     # x = equations_solver.gauss(A, b)
     # or
-    # x = equations_solver.solve(A, b, 'gauss')
+    # x = equations_solver.solve(A, b, method='gauss')
 
     # 2. compare different methods.
     # methods_list_all = ['gauss', 'lu', 'chase', 'square_root',

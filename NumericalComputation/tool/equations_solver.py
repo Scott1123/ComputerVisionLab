@@ -6,9 +6,10 @@
 
 """
 
-This is an equations solver.
+This is an solver.
+Solve a linear matrix equation, or system of linear scalar equations.
 
-Provides some classic methods to solve equations, including Gauss, LU decompose, chase, square root.
+Provides some classic methods, including Gauss, LU decompose, chase, square root.
 add Jacobi itration method, Gauss_Seidel itration mathod.
 add SOR method.
 add Conjugate Gradient Method.
