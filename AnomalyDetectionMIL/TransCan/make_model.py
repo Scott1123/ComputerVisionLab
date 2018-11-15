@@ -1,18 +1,12 @@
-import os
-import csv
-import time
 import datetime
 from os import listdir
-from os.path import isfile, join
 
-import numpy as np
 from keras.regularizers import l2
 from keras.models import Sequential
-from keras.models import model_from_json
-from keras.optimizers import SGD, adam, Adagrad
-from keras.layers import Dense, Dropout, Activation, TimeDistributedDense, LSTM, Reshape
+from keras.optimizers import Adagrad
+from keras.layers import Dense, Dropout
 
-from utils import *
+from AnomalyDetectionMIL.TransCan.utils import *
 
 print("1. Create model...")
 
