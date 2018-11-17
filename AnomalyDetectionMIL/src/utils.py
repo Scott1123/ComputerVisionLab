@@ -4,10 +4,18 @@ import glob
 import numpy as np
 from keras import backend as K
 
-# file path
+# train file path
 TRAIN_DATA_DIR = '/data/UCF_Anomaly_Dataset/C3D_Features/Train/'
 OUTPUT_DIR = '/data/UCF_Anomaly_Dataset/Trained_Models/TrainedModel_MIL_C3D/'
 FINAL_MODEL_PATH = OUTPUT_DIR + 'final_model.hdf5'
+
+# test file path
+# C3D features(txt file) of each video. Each file contains 32 features, each of 4096 dimensions.
+TEST_DATA_DIR = '/newdata/UCF_Anomaly_Dataset/Dataset/CVPR_Data/C3D_Complete_Video_txt/Test/'
+# the folder where you can save your results
+RESULTS_DIR = '../Eval_Res/'
+MODEL_DIR = '../Trained_AnomalyModel/'
+MODEL_PATH = MODEL_DIR + 'final_model.hdf5'
 
 # parameters
 num_seg = 32
@@ -175,3 +183,24 @@ def load_train_data_batch(abnormal_path, normal_path):
     print("Labels loaded.")
 
     return AllFeatures, AllLabels
+
+
+# Load Video
+def load_test_data_one_video(Test_Video_Path):
+    VideoPath = Test_Video_Path
+    f = open(VideoPath, "r")
+    words = f.read().split()
+    num_feat = len(words) / 4096  # 32
+
+    count = -1
+    VideoFeatues = []
+    for feat in range(num_feat):
+        feat_row1 = np.float32(words[feat * 4096:feat * 4096 + 4096])
+        count = count + 1
+        if count == 0:
+            VideoFeatues = feat_row1
+        if count > 0:
+            VideoFeatues = np.vstack((VideoFeatues, feat_row1))
+    AllFeatures = VideoFeatues
+
+    return AllFeatures
