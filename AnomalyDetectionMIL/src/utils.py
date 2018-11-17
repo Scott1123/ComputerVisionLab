@@ -74,18 +74,19 @@ def custom_objective(y_true, y_pred):
 
 
 def load_train_data_batch(abnormal_path, normal_path):
-    #    print("Loading training batch")
+    print("0. Loading training batch")
 
     n_exp = batch_size / 2  # Number of abnormal and normal videos
 
     Num_abnormal = 810  # Total number of abnormal videos in Training Dataset.
     Num_Normal = 800  # Total number of Normal videos in Training Dataset.
 
-    # We assume the features of abnormal videos and normal videos are located in two different folders.
+    # the features of abnormal videos and normal videos are located in two different folders.
+    # get indexes for randomly selected abnormal and normal videos
     Abnor_list_iter = np.random.permutation(Num_abnormal)
-    Abnor_list_iter = Abnor_list_iter[Num_abnormal - n_exp:]  # Indexes for randomly selected Abnormal Videos
+    Abnor_list_iter = Abnor_list_iter[Num_abnormal - n_exp:]
     Norm_list_iter = np.random.permutation(Num_Normal)
-    Norm_list_iter = Norm_list_iter[Num_Normal - n_exp:]  # Indexes for randomly selected Normal Videos
+    Norm_list_iter = Norm_list_iter[Num_Normal - n_exp:]
 
     AllVideos_Path = abnormal_path
 
@@ -98,7 +99,7 @@ def load_train_data_batch(abnormal_path, normal_path):
     All_Videos = sorted(listdir_nohidden(AllVideos_Path))
     All_Videos.sort()
     AllFeatures = []  # To store C3D features of a batch
-    print("Loading Abnormal videos Features...")
+    print("1. Loading Abnormal videos Features...")
 
     Video_count = -1
     for iv in Abnor_list_iter:
@@ -106,13 +107,7 @@ def load_train_data_batch(abnormal_path, normal_path):
         VideoPath = os.path.join(AllVideos_Path, All_Videos[iv])
         f = open(VideoPath, "r")
         words = f.read().split()
-        num_feat = len(words) / 4096
-        # Number of features per video to be loaded.
-        # In our case num_feat=32, as we divide the video into 32 segments.
-
-        # Note that:
-        # we have already computed C3D features for the whole video and divide the video features
-        # into 32 segments. Please see Save_C3DFeatures_32Segments.m as well
+        num_feat = len(words) / 4096  # 32
 
         count = -1
         VideoFeatues = []
@@ -128,9 +123,10 @@ def load_train_data_batch(abnormal_path, normal_path):
             AllFeatures = VideoFeatues
         if Video_count > 0:
             AllFeatures = np.vstack((AllFeatures, VideoFeatues))
-        print(" Abnormal Features  loaded")
 
-    print("Loading Normal videos...")
+    print("Abnormal Features loaded.")
+
+    print("2. Loading Normal videos...")
     AllVideos_Path = normal_path
 
     def listdir_nohidden(AllVideos_Path):  # To ignore hidden files
@@ -163,9 +159,9 @@ def load_train_data_batch(abnormal_path, normal_path):
             feat_row1 = []
         AllFeatures = np.vstack((AllFeatures, VideoFeatues))
 
-    print("Features  loaded")
+    print("Normal Features loaded.")
 
-    # load labels
+    print("3. Loading labels...")
     AllLabels = np.zeros(32 * batch_size, dtype='uint8')
     th_loop1 = n_exp * 32
     th_loop2 = n_exp * 32 - 1
@@ -176,6 +172,6 @@ def load_train_data_batch(abnormal_path, normal_path):
         if iv > th_loop2:
             AllLabels[iv] = int(1)  # normal videos are labeled 1.
 
-    print("ALLabels  loaded")
+    print("Labels loaded.")
 
     return AllFeatures, AllLabels
