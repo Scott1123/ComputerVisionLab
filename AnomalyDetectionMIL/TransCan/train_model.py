@@ -7,7 +7,7 @@ from scipy.io import loadmat, savemat
 from keras.models import model_from_json
 import keras.backend as T
 # import theano.tensor as T
-# import theano
+import theano
 import csv
 # import ConfigParser
 import collections
@@ -245,18 +245,10 @@ def custom_objective(y_true, y_pred):
         z = T.sum(T.sqr(z))
         sub_l2 = T.concatenate([sub_l2, T.stack(z)])
 
-    # sub_max[Num_d:] means include all elements after Num_d.
-    # AllLabels =[2 , 4, 3 ,9 ,6 ,12,7 ,18 ,9 ,14]
-    # z=x[4:]
-    # [  6.  12.   7.  18.   9.  14.]
-
     sub_score = sub_max[Num_d:]  # We need this step since we have used T.ones_like
     F_labels = sub_sum_labels[Num_d:]  # We need this step since we have used T.ones_like
-    #  F_labels contains integer 32 for normal video and 0 for abnormal videos. This because of labeling done at the end of "load_dataset_Train_batch"
-
-    # AllLabels =[2 , 4, 3 ,9 ,6 ,12,7 ,18 ,9 ,14]
-    # z=x[:4]
-    # [ 2 4 3 9]... This shows 0 to 3 elements
+    #  F_labels contains integer 32 for normal video and 0 for abnormal videos.
+    # This because of labeling done at the end of "load_dataset_Train_batch"
 
     sub_sum_l1 = sub_sum_l1[Num_d:]  # We need this step since we have used T.ones_like
     sub_sum_l1 = sub_sum_l1[:n_exp]
@@ -290,7 +282,8 @@ model.compile(loss=custom_objective, optimizer=adagrad)
 print("Starting training...")
 
 AllClassPath = '/newdata/UCF_Anomaly_Dataset/Dataset/CVPR_Data/C3D_Features_Txt/Train/'
-# AllClassPath contains C3D features (.txt file)  of each video. Each text file contains 32 features, each of 4096 dimension
+# AllClassPath contains C3D features (.txt file)  of each video.
+# Each text file contains 32 features, each of 4096 dimension
 output_dir = '/newdata/UCF_Anomaly_Dataset/Dataset/CVPR_Data/Trained_Models/TrainedModel_MIL_C3D/'
 # Output_dir is the directory where you want to save trained weights
 weights_path = output_dir + 'weights.mat'
