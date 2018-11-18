@@ -23,12 +23,12 @@ one_video_seg = 32  # single video
 one_video_feat = 32  # single video
 one_batch_feat = one_video_seg * batch_size  # for one batch
 
+# hyper_parameter
+lambda_1 = 0.0008  # for temporal_smoothness_term
+lambda_2 = 0.0008  # for sparsity_term
+
 
 def custom_loss(y_true, y_pred):
-    # hyper_parameter
-    lambda_1 = 0.0008  # for temporal_smoothness_term
-    lambda_2 = 0.0008  # for sparsity_term
-
     # init
     y_true = K.flatten(y_true)
     y_pred = K.flatten(y_pred)
