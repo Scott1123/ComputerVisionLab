@@ -35,14 +35,14 @@ for it_num in range(num_iters):
     abnormal_path = os.path.join(TRAIN_DATA_DIR, all_train_file[0])
     normal_path = os.path.join(TRAIN_DATA_DIR, all_train_file[1])
     inputs, targets = load_train_data_batch(abnormal_path, normal_path)
-    batch_loss = model.train_on_batch(inputs, targets)
+    batch_loss = model.train_on_batch(inputs, targets)  # train on batch
     total_iterations += 1
     if total_iterations % 20 == 1:
         print("These iteration=" +
               str(total_iterations) + ") cost: " +
               str((datetime.now() - tmp_start).seconds) +
               "s, with batch loss of " + str(batch_loss))
-    if total_iterations % 1000 == 0:  # Save the model at every 1000th iterations.
+    if total_iterations % 1000 == 0:
         tmp_model_path = OUTPUT_DIR + 'tmp_model_' + str(total_iterations) + '.h5'
         model.save(tmp_model_path)
 

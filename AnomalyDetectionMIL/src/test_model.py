@@ -24,7 +24,7 @@ for i in range(num_videos):
     inputs = load_test_data_one_video(test_video_path)  # 32 segments features for one testing video
     predictions = model.predict_on_batch(inputs)  # Get anomaly prediction for each of 32 video segments.
     name = all_test_file[i]
-    name = name[:-4]  # remove suffix
+    name = name[:-4]  # remove type suffix
     predictions_mat = RESULTS_DIR + str(name) + '_pred.mat'
     savemat(predictions_mat)
 

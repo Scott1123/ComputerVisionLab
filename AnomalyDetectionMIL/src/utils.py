@@ -19,9 +19,9 @@ MODEL_PATH = MODEL_DIR + 'model.h5'
 
 # parameters
 batch_size = 60  # train batch
-ont_video_seg = 32  # single video
-ont_video_feat = 32  # single video
-ont_batch_feat = ont_video_seg * batch_size  # for one batch
+one_video_seg = 32  # single video
+one_video_feat = 32  # single video
+one_batch_feat = one_video_seg * batch_size  # for one batch
 
 
 def custom_loss(y_true, y_pred):
@@ -41,27 +41,27 @@ def custom_loss(y_true, y_pred):
 
     for i in range(batch_size):
         # init sum_true
-        tmp_true = y_true[i * ont_video_seg: i * ont_video_seg + ont_video_seg]
+        tmp_true = y_true[i * one_video_seg: i * one_video_seg + one_video_seg]
         sum_true = K.concatenate([sum_true, K.stack(K.sum(tmp_true))])
 
         # init sum_pred, max_pred
-        tmp_pred = y_pred[i * ont_video_seg: i * ont_video_seg + ont_video_seg]
+        tmp_pred = y_pred[i * one_video_seg: i * one_video_seg + one_video_seg]
         sum_pred = K.concatenate([sum_pred, K.stack(K.sum(tmp_pred))])
         max_pred = K.concatenate([max_pred, K.stack(K.max(tmp_pred))])
 
         # calculate temporal_smoothness_term
         vec = K.ones_like(tmp_pred)
-        v_n0 = K.concatenate([vec, tmp_pred])[(ont_video_seg - 1):]
-        v_n1 = K.concatenate([tmp_pred, vec])[:(ont_video_seg + 1)]
-        dif = (v_n0 - v_n1)[1:ont_video_seg]
+        v_n0 = K.concatenate([vec, tmp_pred])[(one_video_seg - 1):]
+        v_n1 = K.concatenate([tmp_pred, vec])[:(one_video_seg + 1)]
+        dif = (v_n0 - v_n1)[1:one_video_seg]
         dif2 = K.sum(K.pow(dif, 2))
         pow_dif_pred = K.concatenate([pow_dif_pred, K.stack(dif2)])
 
-    preds = max_pred[ont_batch_feat:]
-    trues = sum_true[ont_batch_feat:]
+    preds = max_pred[one_batch_feat:]
+    trues = sum_true[one_batch_feat:]
 
-    sparsity_term = sum_pred[ont_batch_feat:(ont_batch_feat + batch_size / 2)]
-    temporal_smoothness_term = pow_dif_pred[ont_batch_feat:(ont_batch_feat + batch_size / 2)]
+    sparsity_term = sum_pred[one_batch_feat:(one_batch_feat + batch_size / 2)]
+    temporal_smoothness_term = pow_dif_pred[one_batch_feat:(one_batch_feat + batch_size / 2)]
 
     # get index
     index_normal = K.equal(trues, 32).nonzero()[0]
@@ -76,105 +76,71 @@ def custom_loss(y_true, y_pred):
         p0 = K.max(0, 1 - abnormal_pred + normal_pred)
         loss = K.concatenate([loss, K.stack(K.sum(p0))])
 
-    loss = loss[ont_batch_feat:]
+    loss = loss[one_batch_feat:]
     loss = K.mean(loss, axis=-1) + lambda_1 * temporal_smoothness_term + lambda_2 * sparsity_term
 
     return loss
 
 
 def load_train_data_batch(abnormal_path, normal_path):
-    print("0. Loading training batch")
+    num_abnormal = 810
+    num_normal = 800
 
-    n_exp = batch_size / 2  # Number of abnormal and normal videos
+    index_abnormal = np.random.permutation(num_abnormal)[:(batch_size // 2)]
+    index_normal = np.random.permutation(num_normal)[:(batch_size // 2)]
 
-    num_abnormal = 810  # Total number of abnormal videos in training data set.
-    num_normal = 800  # Total number of Normal videos in training data set.
+    video_abnormal = sorted(_listdir_nohidden(abnormal_path))
+    video_normal = sorted(_listdir_nohidden(normal_path))
 
-    # the features of abnormal videos and normal videos are located in two different folders.
-    # get indexes for randomly selected abnormal and normal videos
-    abnormal_list_iter = np.random.permutation(num_abnormal)
-    abnormal_list_iter = abnormal_list_iter[num_abnormal - n_exp:]
-    normal_list_iter = np.random.permutation(num_normal)
-    normal_list_iter = normal_list_iter[num_normal - n_exp:]
+    all_features = []
 
-    all_videos_path = abnormal_path
-    all_videos = sorted(_listdir_nohidden(all_videos_path))
-    all_videos.sort()
-    all_features = []  # To store C3D features of a batch
-    print("1. Loading Abnormal videos Features...")
+    print('1. loading abnormal video features...')
+    for idx in index_abnormal:
+        video_path = os.path.join(abnormal_path, video_abnormal[idx])
+        f = open(video_path, 'r')
+        content = f.read().split()
 
-    cnt_video = -1
-    for i in abnormal_list_iter:
-        cnt_video = cnt_video + 1
-        video_path = os.path.join(all_videos_path, all_videos[i])
-        f = open(video_path, "r")
-        words = f.read().split()
+        for i in range(one_video_feat):
+            tmp_feat = np.float32(content[i * 4096:i * 4096 + 4096])
+            if len(all_features) == 0:
+                all_features = tmp_feat
+            else:
+                all_features = np.vstack((all_features, tmp_feat))
 
-        count = -1
-        video_features = []
-        for feat in range(ont_video_feat):
-            feat_row1 = np.float32(words[feat * 4096:feat * 4096 + 4096])
-            count = count + 1
-            if count == 0:
-                video_features = feat_row1
-            if count > 0:
-                video_features = np.vstack((video_features, feat_row1))
+    print('3. loading normal video features...')
+    for idx in index_normal:
+        video_path = os.path.join(normal_path, video_normal[idx])
+        f = open(video_path, 'r')
+        content = f.read().split()
 
-        if cnt_video == 0:
-            all_features = video_features
-        if cnt_video > 0:
-            all_features = np.vstack((all_features, video_features))
+        for i in range(one_video_feat):
+            tmp_feat = np.float32(content[i * 4096:i * 4096 + 4096])
+            if len(all_features) == 0:
+                all_features = tmp_feat
+            else:
+                all_features = np.vstack((all_features, tmp_feat))
 
-    print("Abnormal Features loaded.")
-
-    print("2. Loading Normal videos...")
-    all_videos_path = normal_path
-
-    all_videos = sorted(_listdir_nohidden(all_videos_path))
-    all_videos.sort()
-
-    for i in normal_list_iter:
-        video_path = os.path.join(all_videos_path, all_videos[i])
-        f = open(video_path, "r")
-        words = f.read().split()
-
-        count = -1
-        video_features = []
-        for feat in range(0, ont_video_feat):
-            feat_row1 = np.float32(words[feat * 4096:feat * 4096 + 4096])
-            count = count + 1
-            if count == 0:
-                video_features = feat_row1
-            if count > 0:
-                video_features = np.vstack((video_features, feat_row1))
-
-        all_features = np.vstack((all_features, video_features))
-
-    print("Normal Features loaded.")
-
-    print("3. Loading labels...")
+    print("3. loading labels...")
     num = batch_size * 32
     all_labels = [0 if i < num / 2 else 1 for i in range(num)]
-    print("Labels loaded.")
+
+    print("batch TRAIN data loaded.")
 
     return all_features, all_labels
 
 
 def load_test_data_one_video(test_video_path):
-    video_path = test_video_path
-    f = open(video_path, "r")
-    words = f.read().split()
+    all_features = []
 
-    count = -1
-    video_features = []
-    for feat in range(ont_video_feat):
-        feat_row1 = np.float32(words[feat * 4096:feat * 4096 + 4096])
-        count = count + 1
-        if count == 0:
-            video_features = feat_row1
-        if count > 0:
-            video_features = np.vstack((video_features, feat_row1))
-    all_features = video_features
+    f = open(test_video_path, 'r')
+    content = f.read().split()
+
+    for i in range(one_video_feat):
+        tmp_feat = np.float32(content[i * 4096:i * 4096 + 4096])
+        if len(all_features) == 0:
+            all_features = tmp_feat
+        else:
+            all_features = np.vstack((all_features, tmp_feat))
 
     return all_features
 
