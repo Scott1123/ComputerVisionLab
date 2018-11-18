@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 
 from keras.regularizers import l2
 from keras.models import Sequential
@@ -24,17 +24,17 @@ model.compile(loss=custom_objective, optimizer=Adagrad(lr=0.01, epsilon=1e-08))
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 
-All_class_files = os.listdir(TRAIN_DATA_DIR)
-All_class_files.sort()
+all_train_file = os.listdir(TRAIN_DATA_DIR)
+all_train_file.sort()
 num_iters = 8000  # 20000
 total_iterations = 0
 tmp_start = datetime.now()
 
 for it_num in range(num_iters):
 
-    AbnormalPath = os.path.join(TRAIN_DATA_DIR, All_class_files[0])
-    NormalPath = os.path.join(TRAIN_DATA_DIR, All_class_files[1])
-    inputs, targets = load_train_data_batch(AbnormalPath, NormalPath)
+    abnormal_path = os.path.join(TRAIN_DATA_DIR, all_train_file[0])
+    normal_path = os.path.join(TRAIN_DATA_DIR, all_train_file[1])
+    inputs, targets = load_train_data_batch(abnormal_path, normal_path)
     batch_loss = model.train_on_batch(inputs, targets)
     total_iterations += 1
     if total_iterations % 20 == 1:

@@ -1,5 +1,6 @@
 from datetime import datetime
 from keras.models import load_model
+from scipy.io import savemat
 
 from utils import *
 
@@ -11,21 +12,20 @@ print("Starting testing...")
 if not os.path.exists(RESULTS_DIR):
     os.makedirs(RESULTS_DIR)
 
-All_Test_files = os.listdir(TEST_DATA_DIR)
-All_Test_files.sort()
+all_test_file = os.listdir(TEST_DATA_DIR)
+all_test_file.sort()
 
 model = load_model(MODEL_PATH)
-nVideos = len(All_Test_files)
-time_before = datetime.now()
+num_videos = len(all_test_file)
+time_start = datetime.now()
 
-for iv in range(nVideos):
-    Test_Video_Path = os.path.join(TEST_DATA_DIR, All_Test_files[iv])
-    inputs = load_test_data_one_video(Test_Video_Path)  # 32 segments features for one testing video
+for i in range(num_videos):
+    test_video_path = os.path.join(TEST_DATA_DIR, all_test_file[i])
+    inputs = load_test_data_one_video(test_video_path)  # 32 segments features for one testing video
     predictions = model.predict_on_batch(inputs)  # Get anomaly prediction for each of 32 video segments.
-    aa = All_Test_files[iv]
-    aa = aa[0:-4]
-    A_predictions_path = RESULTS_DIR + str(aa) + '.mat'
-    # Save array of 1*32, containing anomaly score for each segment.
-    # Please see Evaluate Anomaly Detector to compute ROC.
+    name = all_test_file[i]
+    name = name[:-4]  # remove suffix
+    predictions_mat = RESULTS_DIR + str(name) + '_pred.mat'
+    savemat(predictions_mat)
 
-    print("Total Time took: " + str(datetime.now() - time_before))
+    print("Total Time took: " + str(datetime.now() - time_start))

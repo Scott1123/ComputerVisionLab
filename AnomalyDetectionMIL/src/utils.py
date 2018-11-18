@@ -11,7 +11,7 @@ FINAL_MODEL_PATH = OUTPUT_DIR + 'final_model.hdf5'
 
 # test file path
 # C3D features(txt file) of each video. Each file contains 32 features, each of 4096 dimensions.
-TEST_DATA_DIR = '/newdata/UCF_Anomaly_Dataset/Dataset/CVPR_Data/C3D_Complete_Video_txt/Test/'
+TEST_DATA_DIR = '/data/UCF_Anomaly_Dataset/C3D_Complete_Video_txt/Test/'
 # the folder where you can save your results
 RESULTS_DIR = '../Eval_Res/'
 MODEL_DIR = '../Trained_AnomalyModel/'
@@ -86,121 +86,103 @@ def load_train_data_batch(abnormal_path, normal_path):
 
     n_exp = batch_size / 2  # Number of abnormal and normal videos
 
-    Num_abnormal = 810  # Total number of abnormal videos in Training Dataset.
-    Num_Normal = 800  # Total number of Normal videos in Training Dataset.
+    num_abnormal = 810  # Total number of abnormal videos in Training Dataset.
+    num_normal = 800  # Total number of Normal videos in Training Dataset.
 
     # the features of abnormal videos and normal videos are located in two different folders.
     # get indexes for randomly selected abnormal and normal videos
-    Abnor_list_iter = np.random.permutation(Num_abnormal)
-    Abnor_list_iter = Abnor_list_iter[Num_abnormal - n_exp:]
-    Norm_list_iter = np.random.permutation(Num_Normal)
-    Norm_list_iter = Norm_list_iter[Num_Normal - n_exp:]
+    abnormal_list_iter = np.random.permutation(num_abnormal)
+    abnormal_list_iter = abnormal_list_iter[num_abnormal - n_exp:]
+    normal_list_iter = np.random.permutation(num_normal)
+    normal_list_iter = normal_list_iter[num_normal - n_exp:]
 
-    AllVideos_Path = abnormal_path
+    all_videos_path = abnormal_path
 
-    def listdir_nohidden(AllVideos_Path):  # To ignore hidden files
-        file_dir_extension = os.path.join(AllVideos_Path, '*_C.txt')
+    def _listdir_nohidden(all_videos_path):
+        file_dir_extension = os.path.join(all_videos_path, '*_C.txt')
         for f in glob.glob(file_dir_extension):
             if not f.startswith('.'):
                 yield os.path.basename(f)
 
-    All_Videos = sorted(listdir_nohidden(AllVideos_Path))
-    All_Videos.sort()
-    AllFeatures = []  # To store C3D features of a batch
+    all_videos = sorted(_listdir_nohidden(all_videos_path))
+    all_videos.sort()
+    all_features = []  # To store C3D features of a batch
     print("1. Loading Abnormal videos Features...")
 
-    Video_count = -1
-    for iv in Abnor_list_iter:
-        Video_count = Video_count + 1
-        VideoPath = os.path.join(AllVideos_Path, All_Videos[iv])
-        f = open(VideoPath, "r")
+    cnt_video = -1
+    for i in abnormal_list_iter:
+        cnt_video = cnt_video + 1
+        video_path = os.path.join(all_videos_path, all_videos[i])
+        f = open(video_path, "r")
         words = f.read().split()
-        num_feat = len(words) / 4096  # 32
+        num_feat = len(words) // 4096  # 32
 
         count = -1
-        VideoFeatues = []
+        video_features = []
         for feat in range(num_feat):
             feat_row1 = np.float32(words[feat * 4096:feat * 4096 + 4096])
             count = count + 1
             if count == 0:
-                VideoFeatues = feat_row1
+                video_features = feat_row1
             if count > 0:
-                VideoFeatues = np.vstack((VideoFeatues, feat_row1))
+                video_features = np.vstack((video_features, feat_row1))
 
-        if Video_count == 0:
-            AllFeatures = VideoFeatues
-        if Video_count > 0:
-            AllFeatures = np.vstack((AllFeatures, VideoFeatues))
+        if cnt_video == 0:
+            all_features = video_features
+        if cnt_video > 0:
+            all_features = np.vstack((all_features, video_features))
 
     print("Abnormal Features loaded.")
 
     print("2. Loading Normal videos...")
-    AllVideos_Path = normal_path
+    all_videos_path = normal_path
 
-    def listdir_nohidden(AllVideos_Path):  # To ignore hidden files
-        file_dir_extension = os.path.join(AllVideos_Path, '*_C.txt')
-        for f in glob.glob(file_dir_extension):
-            if not f.startswith('.'):
-                yield os.path.basename(f)
+    all_videos = sorted(_listdir_nohidden(all_videos_path))
+    all_videos.sort()
 
-    All_Videos = sorted(listdir_nohidden(AllVideos_Path))
-    All_Videos.sort()
-
-    for iv in Norm_list_iter:
-        VideoPath = os.path.join(AllVideos_Path, All_Videos[iv])
-        f = open(VideoPath, "r")
+    for i in normal_list_iter:
+        video_path = os.path.join(all_videos_path, all_videos[i])
+        f = open(video_path, "r")
         words = f.read().split()
-        feat_row1 = np.array([])
-        num_feat = len(
-            words) / 4096  # Number of features to be loaded. In our case num_feat=32, as we divide the video into 32 segments.
+        num_feat = len(words) // 4096  # 32
 
         count = -1
-        VideoFeatues = []
+        video_features = []
         for feat in range(0, num_feat):
-
             feat_row1 = np.float32(words[feat * 4096:feat * 4096 + 4096])
             count = count + 1
             if count == 0:
-                VideoFeatues = feat_row1
+                video_features = feat_row1
             if count > 0:
-                VideoFeatues = np.vstack((VideoFeatues, feat_row1))
-            feat_row1 = []
-        AllFeatures = np.vstack((AllFeatures, VideoFeatues))
+                video_features = np.vstack((video_features, feat_row1))
+
+        all_features = np.vstack((all_features, video_features))
 
     print("Normal Features loaded.")
 
     print("3. Loading labels...")
-    AllLabels = np.zeros(32 * batch_size, dtype='uint8')
-    th_loop1 = n_exp * 32
-    th_loop2 = n_exp * 32 - 1
-
-    for iv in range(0, 32 * batch_size):
-        if iv < th_loop1:
-            AllLabels[iv] = int(0)  # abnormal videos are labeled 0.
-        if iv > th_loop2:
-            AllLabels[iv] = int(1)  # normal videos are labeled 1.
-
+    num = batch_size * 32
+    all_labels = [0 if i < num / 2 else 1 for i in range(num)]
     print("Labels loaded.")
 
-    return AllFeatures, AllLabels
+    return all_features, all_labels
 
 
-# Load Video
-def load_test_data_one_video(Test_Video_Path):
-    VideoPath = Test_Video_Path
-    f = open(VideoPath, "r")
+def load_test_data_one_video(test_video_path):
+    video_path = test_video_path
+    f = open(video_path, "r")
     words = f.read().split()
-    num_feat = len(words) / 4096  # 32
+    num_feat = len(words) // 4096  # 32
 
     count = -1
-    VideoFeatues = []
+    video_features = []
     for feat in range(num_feat):
         feat_row1 = np.float32(words[feat * 4096:feat * 4096 + 4096])
         count = count + 1
         if count == 0:
-            VideoFeatues = feat_row1
+            video_features = feat_row1
         if count > 0:
-            VideoFeatues = np.vstack((VideoFeatues, feat_row1))
-    AllFeatures = VideoFeatues
+            video_features = np.vstack((video_features, feat_row1))
+    all_features = video_features
 
-    return AllFeatures
+    return all_features
