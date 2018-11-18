@@ -17,7 +17,7 @@ model.add(Dense(32, init='glorot_normal', W_regularizer=l2(0.001)))
 model.add(Dropout(0.6))
 model.add(Dense(1, init='glorot_normal', W_regularizer=l2(0.001), activation='sigmoid'))
 
-model.compile(loss=custom_objective, optimizer=Adagrad(lr=0.01, epsilon=1e-08))
+model.compile(loss=custom_loss, optimizer=Adagrad(lr=0.01, epsilon=1e-08))
 
 
 # 2. train model
@@ -26,7 +26,7 @@ if not os.path.exists(OUTPUT_DIR):
 
 all_train_file = os.listdir(TRAIN_DATA_DIR)
 all_train_file.sort()
-num_iters = 8000  # 20000
+num_iters = 1000  # 20000
 total_iterations = 0
 tmp_start = datetime.now()
 
@@ -39,12 +39,11 @@ for it_num in range(num_iters):
     total_iterations += 1
     if total_iterations % 20 == 1:
         print("These iteration=" +
-              str(total_iterations) + ") took: " +
-              str(datetime.now() - tmp_start) +
-              ", with batch loss of " + str(batch_loss))
+              str(total_iterations) + ") cost: " +
+              str((datetime.now() - tmp_start).seconds) +
+              "s, with batch loss of " + str(batch_loss))
     if total_iterations % 1000 == 0:  # Save the model at every 1000th iterations.
-        tmp_model_path = OUTPUT_DIR + 'tmp_model_' + str(total_iterations) + '.hdf5'
+        tmp_model_path = OUTPUT_DIR + 'tmp_model_' + str(total_iterations) + '.h5'
         model.save(tmp_model_path)
 
-model.save(FINAL_MODEL_PATH)
-
+model.save(MODEL_PATH)

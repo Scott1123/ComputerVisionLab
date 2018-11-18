@@ -7,7 +7,7 @@ from keras import backend as K
 # train file path
 TRAIN_DATA_DIR = '/data/UCF_Anomaly_Dataset/C3D_Features/Train/'
 OUTPUT_DIR = '/data/UCF_Anomaly_Dataset/Trained_Models/TrainedModel_MIL_C3D/'
-FINAL_MODEL_PATH = OUTPUT_DIR + 'final_model.hdf5'
+FINAL_MODEL_PATH = OUTPUT_DIR + 'final_model.h5'
 
 # test file path
 # C3D features(txt file) of each video. Each file contains 32 features, each of 4096 dimensions.
@@ -15,15 +15,16 @@ TEST_DATA_DIR = '/data/UCF_Anomaly_Dataset/C3D_Complete_Video_txt/Test/'
 # the folder where you can save your results
 RESULTS_DIR = '../Eval_Res/'
 MODEL_DIR = '../Trained_AnomalyModel/'
-MODEL_PATH = MODEL_DIR + 'final_model.hdf5'
+MODEL_PATH = MODEL_DIR + 'model.h5'
 
 # parameters
-num_seg = 32
-batch_size = 60
-num_feat = num_seg * batch_size
+batch_size = 60  # train batch
+ont_video_seg = 32  # single video
+ont_video_feat = 32  # single video
+ont_batch_feat = ont_video_seg * batch_size  # for one batch
 
 
-def custom_objective(y_true, y_pred):
+def custom_loss(y_true, y_pred):
     # hyper_parameter
     lambda_1 = 0.0008  # for temporal_smoothness_term
     lambda_2 = 0.0008  # for sparsity_term
@@ -40,27 +41,27 @@ def custom_objective(y_true, y_pred):
 
     for i in range(batch_size):
         # init sum_true
-        tmp_true = y_true[i * num_seg: i * num_seg + num_seg]
+        tmp_true = y_true[i * ont_video_seg: i * ont_video_seg + ont_video_seg]
         sum_true = K.concatenate([sum_true, K.stack(K.sum(tmp_true))])
 
         # init sum_pred, max_pred
-        tmp_pred = y_pred[i * num_seg: i * num_seg + num_seg]
+        tmp_pred = y_pred[i * ont_video_seg: i * ont_video_seg + ont_video_seg]
         sum_pred = K.concatenate([sum_pred, K.stack(K.sum(tmp_pred))])
         max_pred = K.concatenate([max_pred, K.stack(K.max(tmp_pred))])
 
         # calculate temporal_smoothness_term
         vec = K.ones_like(tmp_pred)
-        v_n0 = K.concatenate([vec, tmp_pred])[(num_seg - 1):]
-        v_n1 = K.concatenate([tmp_pred, vec])[:(num_seg + 1)]
-        dif = (v_n0 - v_n1)[1:num_seg]
+        v_n0 = K.concatenate([vec, tmp_pred])[(ont_video_seg - 1):]
+        v_n1 = K.concatenate([tmp_pred, vec])[:(ont_video_seg + 1)]
+        dif = (v_n0 - v_n1)[1:ont_video_seg]
         dif2 = K.sum(K.pow(dif, 2))
         pow_dif_pred = K.concatenate([pow_dif_pred, K.stack(dif2)])
 
-    preds = max_pred[num_feat:]
-    trues = sum_true[num_feat:]
+    preds = max_pred[ont_batch_feat:]
+    trues = sum_true[ont_batch_feat:]
 
-    sparsity_term = sum_pred[num_feat:(num_feat + batch_size / 2)]
-    temporal_smoothness_term = pow_dif_pred[num_feat:(num_feat + batch_size / 2)]
+    sparsity_term = sum_pred[ont_batch_feat:(ont_batch_feat + batch_size / 2)]
+    temporal_smoothness_term = pow_dif_pred[ont_batch_feat:(ont_batch_feat + batch_size / 2)]
 
     # get index
     index_normal = K.equal(trues, 32).nonzero()[0]
@@ -75,7 +76,7 @@ def custom_objective(y_true, y_pred):
         p0 = K.max(0, 1 - abnormal_pred + normal_pred)
         loss = K.concatenate([loss, K.stack(K.sum(p0))])
 
-    loss = loss[num_feat:]
+    loss = loss[ont_batch_feat:]
     loss = K.mean(loss, axis=-1) + lambda_1 * temporal_smoothness_term + lambda_2 * sparsity_term
 
     return loss
@@ -86,8 +87,8 @@ def load_train_data_batch(abnormal_path, normal_path):
 
     n_exp = batch_size / 2  # Number of abnormal and normal videos
 
-    num_abnormal = 810  # Total number of abnormal videos in Training Dataset.
-    num_normal = 800  # Total number of Normal videos in Training Dataset.
+    num_abnormal = 810  # Total number of abnormal videos in training data set.
+    num_normal = 800  # Total number of Normal videos in training data set.
 
     # the features of abnormal videos and normal videos are located in two different folders.
     # get indexes for randomly selected abnormal and normal videos
@@ -97,13 +98,6 @@ def load_train_data_batch(abnormal_path, normal_path):
     normal_list_iter = normal_list_iter[num_normal - n_exp:]
 
     all_videos_path = abnormal_path
-
-    def _listdir_nohidden(all_videos_path):
-        file_dir_extension = os.path.join(all_videos_path, '*_C.txt')
-        for f in glob.glob(file_dir_extension):
-            if not f.startswith('.'):
-                yield os.path.basename(f)
-
     all_videos = sorted(_listdir_nohidden(all_videos_path))
     all_videos.sort()
     all_features = []  # To store C3D features of a batch
@@ -115,11 +109,10 @@ def load_train_data_batch(abnormal_path, normal_path):
         video_path = os.path.join(all_videos_path, all_videos[i])
         f = open(video_path, "r")
         words = f.read().split()
-        num_feat = len(words) // 4096  # 32
 
         count = -1
         video_features = []
-        for feat in range(num_feat):
+        for feat in range(ont_video_feat):
             feat_row1 = np.float32(words[feat * 4096:feat * 4096 + 4096])
             count = count + 1
             if count == 0:
@@ -144,11 +137,10 @@ def load_train_data_batch(abnormal_path, normal_path):
         video_path = os.path.join(all_videos_path, all_videos[i])
         f = open(video_path, "r")
         words = f.read().split()
-        num_feat = len(words) // 4096  # 32
 
         count = -1
         video_features = []
-        for feat in range(0, num_feat):
+        for feat in range(0, ont_video_feat):
             feat_row1 = np.float32(words[feat * 4096:feat * 4096 + 4096])
             count = count + 1
             if count == 0:
@@ -172,11 +164,10 @@ def load_test_data_one_video(test_video_path):
     video_path = test_video_path
     f = open(video_path, "r")
     words = f.read().split()
-    num_feat = len(words) // 4096  # 32
 
     count = -1
     video_features = []
-    for feat in range(num_feat):
+    for feat in range(ont_video_feat):
         feat_row1 = np.float32(words[feat * 4096:feat * 4096 + 4096])
         count = count + 1
         if count == 0:
@@ -186,3 +177,11 @@ def load_test_data_one_video(test_video_path):
     all_features = video_features
 
     return all_features
+
+
+def _listdir_nohidden(all_videos_path):
+    file_dir_extension = os.path.join(all_videos_path, '*_C.txt')
+    for f in glob.glob(file_dir_extension):
+        if not f.startswith('.'):
+            yield os.path.basename(f)
+

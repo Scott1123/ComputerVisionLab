@@ -28,4 +28,4 @@ for i in range(num_videos):
     predictions_mat = RESULTS_DIR + str(name) + '_pred.mat'
     savemat(predictions_mat)
 
-    print("Total Time took: " + str(datetime.now() - time_start))
+    print("Total time cost: " + str((datetime.now() - time_start).seconds) + 's.')
