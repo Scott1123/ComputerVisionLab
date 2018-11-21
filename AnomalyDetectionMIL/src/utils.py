@@ -6,16 +6,14 @@ from keras import backend as K
 
 # train file path
 TRAIN_DATA_DIR = '/data/UCF_Anomaly_Dataset/C3D_Features/Train/'
-OUTPUT_DIR = '/data/UCF_Anomaly_Dataset/Trained_Models/TrainedModel_MIL_C3D/'
-FINAL_MODEL_PATH = OUTPUT_DIR + 'final_model.h5'
+OUTPUT_DIR = '../model/'
+MODEL_PATH = OUTPUT_DIR + 'model.h5'
 
 # test file path
 # C3D features(txt file) of each video. Each file contains 32 features, each of 4096 dimensions.
-TEST_DATA_DIR = '/data/UCF_Anomaly_Dataset/C3D_Complete_Video_txt/Test/'
+TEST_DATA_DIR = '/data/UCF_Anomaly_Dataset/C3D_Features/Test/'
 # the folder where you can save your results
-RESULTS_DIR = '../Eval_Res/'
-MODEL_DIR = '../Trained_AnomalyModel/'
-MODEL_PATH = MODEL_DIR + 'model.h5'
+RESULTS_DIR = '../res/'
 
 # parameters
 batch_size = 60  # train batch
