@@ -26,7 +26,7 @@ if not os.path.exists(OUTPUT_DIR):
 
 all_train_file = os.listdir(TRAIN_DATA_DIR)
 all_train_file.sort()
-num_iters = 1000  # 20000
+num_iters = 1000  # 20000  1000  20  3
 total_iterations = 0
 tmp_start = datetime.now()
 
