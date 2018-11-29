@@ -4,6 +4,8 @@ from keras.regularizers import l2
 from keras.models import Sequential
 from keras.optimizers import Adagrad
 from keras.layers import Dense, Dropout
+import tensorflow as tf
+tf.python.control_flow_ops = tf
 
 from utils import *
 

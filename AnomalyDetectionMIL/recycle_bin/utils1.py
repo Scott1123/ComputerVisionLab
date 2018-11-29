@@ -2,14 +2,11 @@ import os
 import glob
 
 import numpy as np
-import tensorflow as tf
-import keras.backend as K
+from keras import backend as K
 
 # train file path
-# TRAIN_DATA_DIR = '/data/UCF_Anomaly_Dataset/C3D_Features/Train/'
-TRAIN_DATA_DIR = '/home/timchen/AnomalyDetectionCVPR2018/SampleVideos/'
-# OUTPUT_DIR = '../model/'
-OUTPUT_DIR = '/home/timchen/AnomalyDetectionCVPR2018/output/'
+TRAIN_DATA_DIR = '/data/UCF_Anomaly_Dataset/C3D_Features/Train/'
+OUTPUT_DIR = '../model/'
 MODEL_PATH = OUTPUT_DIR + 'model.h5'
 
 # test file path
@@ -19,72 +16,73 @@ TEST_DATA_DIR = '/data/UCF_Anomaly_Dataset/C3D_Features/Test/'
 RESULTS_DIR = '../res/'
 
 # parameters
-batch_size = 6  # train batch
+batch_size = 60  # train batch
 one_video_seg = 32  # single video
 one_video_feat = 32  # single video
 one_batch_feat = one_video_seg * batch_size  # for one batch
 
-num_abnormal = 6
-num_normal = 6
-
 # hyper_parameter
 lambda_1 = 0.0008  # for temporal_smoothness_term
 lambda_2 = 0.0008  # for sparsity_term
-data_type = tf.float64
 
 
 def custom_loss(y_true, y_pred):
     # init
     y_true = K.flatten(y_true)
     y_pred = K.flatten(y_pred)
+
     # terms
-    sum_true = K.variable([], dtype=data_type)
-    sum_pred = K.variable([], dtype=data_type)  # sparsity term
-    max_pred = K.variable([], dtype=data_type)
-    pow_dif_pred = K.variable([], dtype=data_type)  # temporal smoothness term
+    sum_true = K.ones_like(y_true)
+    sum_pred = K.ones_like(y_pred)  # sparsity term
+    max_pred = K.ones_like(y_pred)
+    pow_dif_pred = K.ones_like(y_pred)  # temporal smoothness term
 
     for i in range(batch_size):
         # init sum_true
         tmp_true = y_true[i * one_video_seg: i * one_video_seg + one_video_seg]
-        sum_true = K.concatenate([sum_true, [K.sum(tmp_true, axis=-1)]])
+        sum_true = K.concatenate([sum_true, K.sum(tmp_true)])
 
         # init sum_pred, max_pred
         tmp_pred = y_pred[i * one_video_seg: i * one_video_seg + one_video_seg]
-        sum_pred = K.concatenate([sum_pred, [K.sum(tmp_pred, axis=-1)]])
-        max_pred = K.concatenate([max_pred, [K.max(tmp_pred, axis=-1)]])
+        sum_pred = K.concatenate([sum_pred, K.sum(tmp_pred)])
+        max_pred = K.concatenate([max_pred, K.max(tmp_pred)])
 
         # calculate temporal_smoothness_term
-        # dif = [tmp_pred[k] - tmp_pred[k + 1] for k in range(one_video_seg - 1)]
-        # print(type(tmp_pred))
-        one = K.ones_like(tmp_pred)
-        v0 = K.concatenate([one, tmp_pred])
-        v1 = K.concatenate([tmp_pred, one])
-        dif = (v1[:one_video_seg+1] - v0[one_video_seg-1:])[1:]
-        dif = K.concatenate([dif, [tmp_pred[one_video_seg - 1] - 1]])
-        pow_dif_pred = K.concatenate([pow_dif_pred, [K.sum(K.pow(dif, 2))]])
+        vec = K.ones_like(tmp_pred)
+        v_n0 = K.concatenate([vec, tmp_pred])[(one_video_seg - 1):]
+        v_n1 = K.concatenate([tmp_pred, vec])[:(one_video_seg + 1)]
+        dif = (v_n0 - v_n1)[1:one_video_seg]
+        dif2 = K.sum(K.pow(dif, 2))
+        pow_dif_pred = K.concatenate([pow_dif_pred, dif2])
 
-    preds = max_pred
-    trues = sum_true
+    preds = max_pred[one_batch_feat:]
+    trues = sum_true[one_batch_feat:]
 
-    sparsity_term = K.sum(sum_pred, axis=-1)  # 0:batch_size//2 ?
-    temporal_smoothness_term = K.sum(pow_dif_pred, axis=-1)  # 0:batch_size//2 ?
+    sparsity_term = sum_pred[one_batch_feat:(one_batch_feat + batch_size / 2)]
+    temporal_smoothness_term = pow_dif_pred[one_batch_feat:(one_batch_feat + batch_size / 2)]
+
+    # get index
+    index_normal = K.equal(trues, 32).nonzero()[0]
+    index_abnormal = K.equal(trues, 0).nonzero()[0]
 
     # get normal & abnormal preds
-    normal_pred = tf.boolean_mask(preds, K.equal(trues, one_video_seg))
-    abnormal_pred = tf.boolean_mask(preds, K.equal(trues, 0))
+    normal_pred = preds[index_normal]
+    abnormal_pred = preds[index_abnormal]
 
-    loss = K.variable([], dtype=data_type)
+    loss = K.ones_like(y_pred)
     for i in range(batch_size // 2):
-        p0 = K.maximum(K.cast(0, dtype=data_type), 1 - abnormal_pred[i] + normal_pred[i])
-        # print(i, K.eval(p0))
-        loss = K.concatenate([loss, [p0]])
+        p0 = K.max(0, 1 - abnormal_pred + normal_pred)
+        loss = K.concatenate([loss, K.sum(p0)])
 
-    loss = tf.reduce_mean(loss) + lambda_1 * temporal_smoothness_term + lambda_2 * sparsity_term
+    loss = loss[one_batch_feat:]
+    loss = K.mean(loss, axis=-1) + lambda_1 * temporal_smoothness_term + lambda_2 * sparsity_term
 
     return loss
 
 
 def load_train_data_batch(abnormal_path, normal_path):
+    num_abnormal = 810
+    num_normal = 800
 
     index_abnormal = np.random.permutation(num_abnormal)[:(batch_size // 2)]
     index_normal = np.random.permutation(num_normal)[:(batch_size // 2)]
