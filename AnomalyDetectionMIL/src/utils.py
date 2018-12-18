@@ -146,7 +146,7 @@ def load_test_data_one_video(test_video_path):
 
 
 def _listdir_nohidden(all_videos_path):
-    file_dir_extension = os.path.join(all_videos_path, '*_C.txt')
+    file_dir_extension = os.path.join(all_videos_path, '*264.txt')
     for f in glob.glob(file_dir_extension):
         if not f.startswith('.'):
             yield os.path.basename(f)
