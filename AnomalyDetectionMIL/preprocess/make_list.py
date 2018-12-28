@@ -33,7 +33,7 @@ with open(os.path.join(LIST_DIR, 'Anomaly_All.txt'), 'w') as f:
         f.write(name + '\n')
 
 with open(os.path.join(LIST_DIR, 'Anomaly_Train.txt'), 'w') as f:
-    for name in all_files:
+    for name in train_files:
         f.write(name + '\n')
 
 print('make list... OK')

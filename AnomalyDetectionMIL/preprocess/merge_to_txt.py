@@ -30,14 +30,15 @@ def merge_single_video(video_name, csv_folder, txt_file):
     for i in range(32):
         data = [float(0) for k in range(4096)]
         for j in range(i * seg_size, (i + 1) * seg_size):
-            clip_name = (video_name + str('%06d' % (j * 16)) + '.csv')
+            clip_name = (video_name + '_' + str('%06d' % (j * 16)) + '.csv')
             with open(os.path.join(csv_folder, clip_name), 'r') as f:
                 reader = csv.reader(f)
                 line = next(reader)
                 line = [float(x) for x in line]
                 for m in range(4096):
                     data[m] += line[m]
-        data = [('%.6f' % (x / seg_size)) for x in data]
+        div = max(1, seg_size)
+        data = [('%.6f' % (x / div)) for x in data]
         data = ' '.join(data)
         f_output.write(data + ' \n')
 
@@ -56,7 +57,8 @@ def merge_all(txt_dir, csv_dir):
         os.makedirs(os.path.join(txt_dir, folder))
         videos = os.listdir(os.path.join(csv_dir, folder))
         for video in videos:
-            csv_folder = os.path.join(csv_dir, folder, video)
+            video = video.split('.')[0]
+            csv_folder = os.path.join(csv_dir, folder, video + '.mp4')
             txt_file = os.path.join(txt_dir, folder, video + '.txt')
             merge_single_video(video, csv_folder, txt_file)
         print('merge folder: ' + folder + ' successfully.')
@@ -80,10 +82,13 @@ def split_files(src_dir, normal_folder):
 
     for file in train_files:
         folder, name = file.split('/')
+        name = name.split('.')[0] + '.txt'
+        file = folder + '/' + name
         if folder in normal_folder:
-            shutil.copyfile(os.path.join(src_dir, file), TRAIN_NORMAL)
+            shutil.copyfile(os.path.join(src_dir, file), os.path.join(TRAIN_NORMAL, name))
         else:
-            shutil.copyfile(os.path.join(src_dir, file), TRAIN_ABNORMAL)
+            shutil.copyfile(os.path.join(src_dir, file), os.path.join(TRAIN_ABNORMAL, name))
+        print('copy ' + file + '... OK')
     print('copy train files... OK')
 
     # test files
@@ -92,17 +97,23 @@ def split_files(src_dir, normal_folder):
 
     for file in test_files:
         folder, name = file.split('/')
+        name = name.split('.')[0] + '.txt'
+        file = folder + '/' + name
         if folder in normal_folder:
-            shutil.copyfile(os.path.join(src_dir, file), TEST_NORMAL)
+            shutil.copyfile(os.path.join(src_dir, file), os.path.join(TEST_NORMAL, name))
         else:
-            shutil.copyfile(os.path.join(src_dir, file), TEST_ABNORMAL)
+            shutil.copyfile(os.path.join(src_dir, file), os.path.join(TEST_ABNORMAL, name))
+        print('copy ' + file + '... OK')
     print('copy test files... OK')
 
 
 if __name__ == '__main__':
-    print('start merge...')
-    merge_all(TXT_DIR, CSV_DIR)
-    normal_folders = ['Testing_Normal_Videos_Anomaly', 'Testing_Normal_Videos_Anomaly']
+    # print('start merge...')
+    # merge_all(TXT_DIR, CSV_DIR)
+    normal_folders = ['Testing_Normal_Videos_Anomaly', 'Training_Normal_Videos_Anomaly']
     # abnormal_folders = ['Abuse', 'Arrest', 'Arson', 'Assault', 'Burglary', 'Explosion', 'Fighting', 'RoadAccidents',
     #                     'Robbery', 'Shooting', 'Shoplifting', 'Stealing', 'Vandalism']
+    print('start split...')
     split_files(TXT_DIR, normal_folders)
+    print('split... OK')
+

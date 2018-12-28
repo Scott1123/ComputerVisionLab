@@ -3,7 +3,7 @@
 import os
 
 C3D_EXTRACT_ROOT = '/home/timchen/c3d/C3D/C3D-v1.0/examples/c3d_feature_extraction'
-EXTRACTOR = os.path.join(C3D_EXTRACT_ROOT, 'extract_yly.py')
+EXTRACTOR = os.path.join(C3D_EXTRACT_ROOT, 'extract_new.py')
 
 UCF_ROOT = '/home/timchen/media/UCF_Crimes/'
 ALL_LIST = os.path.join(UCF_ROOT, 'Anomaly_Detection_splits', 'Anomaly_All.txt')
