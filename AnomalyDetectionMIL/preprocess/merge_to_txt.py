@@ -3,6 +3,7 @@
 import os
 import csv
 import shutil
+import math
 
 UCF_ROOT = '/home/timchen/media/UCF_Crimes/'
 
@@ -23,7 +24,7 @@ def merge_single_video(video_name, csv_folder, txt_file):
     num_clips = len(os.listdir(csv_folder))
     # print(csv_folder + ' clips: ' + str(num_clips))
 
-    seg_size = num_clips // 32
+    seg_size = math.ceil(num_clips / 32)
 
     f_output = open(txt_file, 'w')
 
@@ -31,12 +32,17 @@ def merge_single_video(video_name, csv_folder, txt_file):
         data = [float(0) for k in range(4096)]
         for j in range(i * seg_size, (i + 1) * seg_size):
             clip_name = (video_name + '_' + str('%06d' % (j * 16)) + '.csv')
-            with open(os.path.join(csv_folder, clip_name), 'r') as f:
+            tmp_path = os.path.join(csv_folder, clip_name)
+            if not os.path.exists(tmp_path):
+                print(tmp_path, 'NOT FOUND!')
+                tmp_path = last_path
+            with open(tmp_path, 'r') as f:
                 reader = csv.reader(f)
                 line = next(reader)
                 line = [float(x) for x in line]
                 for m in range(4096):
                     data[m] += line[m]
+            last_path = tmp_path
         div = max(1, seg_size)
         data = [('%.6f' % (x / div)) for x in data]
         data = ' '.join(data)
@@ -47,6 +53,7 @@ def merge_single_video(video_name, csv_folder, txt_file):
 
 
 def merge_all(txt_dir, csv_dir):
+    num_processed = 0
     if os.path.exists(txt_dir):
         shutil.rmtree(txt_dir)
     os.makedirs(txt_dir)
@@ -62,6 +69,7 @@ def merge_all(txt_dir, csv_dir):
             txt_file = os.path.join(txt_dir, folder, video + '.txt')
             merge_single_video(video, csv_folder, txt_file)
         print('merge folder: ' + folder + ' successfully.')
+        print('processed %d videos.' % num_processed)
 
     print('merge all... OK')
 
@@ -108,8 +116,8 @@ def split_files(src_dir, normal_folder):
 
 
 if __name__ == '__main__':
-    # print('start merge...')
-    # merge_all(TXT_DIR, CSV_DIR)
+    print('start merge...')
+    merge_all(TXT_DIR, CSV_DIR)
     normal_folders = ['Testing_Normal_Videos_Anomaly', 'Training_Normal_Videos_Anomaly']
     # abnormal_folders = ['Abuse', 'Arrest', 'Arson', 'Assault', 'Burglary', 'Explosion', 'Fighting', 'RoadAccidents',
     #                     'Robbery', 'Shooting', 'Shoplifting', 'Stealing', 'Vandalism']
