@@ -7,30 +7,39 @@ import keras.backend as K
 
 # train file path
 # TRAIN_DATA_DIR = '/data/UCF_Anomaly_Dataset/C3D_Features/Train/'
-TRAIN_DATA_DIR = '/home/timchen/AnomalyDetectionCVPR2018/SampleVideos/'
+# TRAIN_DATA_DIR = '/home/timchen/AnomalyDetectionCVPR2018/SampleVideos/'
+TRAIN_DATA_DIR = '/home/timchen/media/UCF_Crimes/All_Data/Train_Data/'
 # OUTPUT_DIR = '../model/'
 OUTPUT_DIR = '/home/timchen/AnomalyDetectionCVPR2018/output/'
-MODEL_PATH = OUTPUT_DIR + 'model.h5'
+MODEL_PATH = os.path.join(OUTPUT_DIR, 'model.h5')
+MODEL_FOR_TEST = os.path.join(OUTPUT_DIR, 'model_4396.h5')
 
 # test file path
 # C3D features(txt file) of each video. Each file contains 32 features, each of 4096 dimensions.
-TEST_DATA_DIR = '/data/UCF_Anomaly_Dataset/C3D_Features/Test/'
+# TEST_DATA_DIR = '/home/timchen/AnomalyDetectionCVPR2018/TestVideos/'
+TEST_DATA_DIR = '/home/timchen/media/UCF_Crimes/All_Data/Test_Data/'
+TEST_ABNORMAL = os.path.join(TEST_DATA_DIR, 'Abnormal_Videos')
+TEST_NORMAL = os.path.join(TEST_DATA_DIR, 'Normal_Videos')
+
 # the folder where you can save your results
-RESULTS_DIR = '../res/'
+RESULT_DIR = '/home/timchen/AnomalyDetectionCVPR2018/Res/'
+RESULT_ABNORMAL = os.path.join(RESULT_DIR, 'Abnormal_Videos')
+RESULT_NORMAL = os.path.join(RESULT_DIR, 'Normal_Videos')
 
 # parameters
-batch_size = 6  # train batch
+batch_size = 60  # train batch
 one_video_seg = 32  # single video
 one_video_feat = 32  # single video
 one_batch_feat = one_video_seg * batch_size  # for one batch
 
-num_abnormal = 6
-num_normal = 6
+num_abnormal = 810
+num_normal = 800
 
 # hyper_parameter
 lambda_1 = 0.0008  # for temporal_smoothness_term
 lambda_2 = 0.0008  # for sparsity_term
-data_type = tf.float64
+data_type = 'float32'
+threshold = 1.0
 
 
 def custom_loss(y_true, y_pred):
@@ -95,7 +104,10 @@ def load_train_data_batch(abnormal_path, normal_path):
     all_features = []
 
     print('1. loading abnormal video features...')
+    # print('index all:', index_abnormal, index_normal)
+    # print(video_abnormal)
     for idx in index_abnormal:
+        # print('idc', idx)
         video_path = os.path.join(abnormal_path, video_abnormal[idx])
         f = open(video_path, 'r')
         content = f.read().split()
@@ -107,7 +119,7 @@ def load_train_data_batch(abnormal_path, normal_path):
             else:
                 all_features = np.vstack((all_features, tmp_feat))
 
-    print('3. loading normal video features...')
+    print('2. loading normal video features...')
     for idx in index_normal:
         video_path = os.path.join(normal_path, video_normal[idx])
         f = open(video_path, 'r')

@@ -1,5 +1,5 @@
 from datetime import datetime
-
+import time
 from keras.regularizers import l2
 from keras.models import Sequential
 from keras.optimizers import Adagrad
@@ -9,6 +9,9 @@ tf.python.control_flow_ops = tf
 
 from utils import *
 
+# determine GPU number
+import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 # 1. make model
 
@@ -28,24 +31,39 @@ if not os.path.exists(OUTPUT_DIR):
 
 all_train_file = os.listdir(TRAIN_DATA_DIR)
 all_train_file.sort()
-num_iters = 1000  # 20000  1000  20  3
+num_iters = 4396  # 20000 3600 1000  20  3
 total_iterations = 0
 tmp_start = datetime.now()
 
-for it_num in range(num_iters):
+abnormal_path = os.path.join(TRAIN_DATA_DIR, all_train_file[0])
+normal_path = os.path.join(TRAIN_DATA_DIR, all_train_file[1])
 
-    abnormal_path = os.path.join(TRAIN_DATA_DIR, all_train_file[0])
-    normal_path = os.path.join(TRAIN_DATA_DIR, all_train_file[1])
+# cur_time = time.strftime('%Y%m%d-%H%M%S',time.localtime(time.time()))
+# log_file = ('log_%s_%d.txt' % (cur_time, num_iters))
+# f_log = open(os.path.join('log', log_file), 'w')
+
+for it_num in range(num_iters):
+    print('[iteration] = (' + str(it_num+1) + ')...')
     inputs, targets = load_train_data_batch(abnormal_path, normal_path)
     batch_loss = model.train_on_batch(inputs, targets)  # train on batch
     total_iterations += 1
     if total_iterations % 20 == 1:
-        print("These iteration=" +
+        print("These iteration=(" +
               str(total_iterations) + ") cost: " +
               str((datetime.now() - tmp_start).seconds) +
               "s, with batch loss of " + str(batch_loss))
     if total_iterations % 1000 == 0:
         tmp_model_path = OUTPUT_DIR + 'tmp_model_' + str(total_iterations) + '.h5'
         model.save(tmp_model_path)
+    # write log.
+    cur_time = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
+    log_info = '[' + cur_time + '] iteration (' + str(total_iterations) + ')... OK\nloss: ' + str(batch_loss)
+    print(log_info)
+    # f_log.write(log_info + '\n')
 
-model.save(MODEL_PATH)
+# f_log.close()
+
+# model_path = MODEL_PATH[:-3] + '_' + str(num_iters) + '.h5'
+model_path = OUTPUT_DIR + 'model_' + str(num_iters) + '.h5'
+model.save(model_path)
+print('train finished.')
