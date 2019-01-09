@@ -22,6 +22,7 @@ model.add(Dense(32, init='glorot_normal', W_regularizer=l2(0.001)))
 model.add(Dropout(0.6))
 model.add(Dense(1, init='glorot_normal', W_regularizer=l2(0.001), activation='sigmoid'))
 
+# we need a better custom loss here
 model.compile(loss=custom_loss, optimizer=Adagrad(lr=0.01, epsilon=1e-08))
 
 
@@ -31,7 +32,7 @@ if not os.path.exists(OUTPUT_DIR):
 
 all_train_file = os.listdir(TRAIN_DATA_DIR)
 all_train_file.sort()
-num_iters = 4396  # 20000 3600 1000  20  3
+num_iters = 20000  # 20000 3600 1000  20  3
 total_iterations = 0
 tmp_start = datetime.now()
 
